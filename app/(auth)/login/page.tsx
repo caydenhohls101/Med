@@ -2,22 +2,27 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { login } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Suspense } from "react";
 
-export default function LoginPage() {
+function LoginForm() {
   const [state, action, pending] = useActionState(login, null);
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next") ?? "";
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Staff Login</CardTitle>
-        <CardDescription>Sign in to manage your practice bookings</CardDescription>
+        <CardTitle>Sign In</CardTitle>
+        <CardDescription>Works for both patients and practice staff</CardDescription>
       </CardHeader>
       <form action={action}>
+        <input type="hidden" name="next" value={next} />
         <CardContent className="space-y-4">
           {state?.error && (
             <div className="rounded-md bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
@@ -26,24 +31,11 @@ export default function LoginPage() {
           )}
           <div className="space-y-1.5">
             <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              placeholder="you@practice.co.za"
-              required
-            />
+            <Input id="email" name="email" type="email" autoComplete="email" required placeholder="you@email.com" />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-            />
+            <Input id="password" name="password" type="password" autoComplete="current-password" required />
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-3">
@@ -51,13 +43,19 @@ export default function LoginPage() {
             {pending ? "Signing in…" : "Sign In"}
           </Button>
           <p className="text-sm text-center text-muted-foreground">
-            New practice?{" "}
-            <Link href="/signup" className="text-primary hover:underline font-medium">
-              Create account
-            </Link>
+            No account?{" "}
+            <Link href="/signup" className="text-primary hover:underline font-medium">Create one</Link>
           </p>
         </CardFooter>
       </form>
     </Card>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }

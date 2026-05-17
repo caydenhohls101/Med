@@ -1,79 +1,48 @@
-"use client";
-
-import { useActionState } from "react";
 import Link from "next/link";
-import { signup } from "@/app/actions/auth";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default function SignupPage() {
-  const [state, action, pending] = useActionState(signup, null);
-
+export default function SignupChoicePage() {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Create Account</CardTitle>
-        <CardDescription>Set up your practice on MediBook</CardDescription>
-      </CardHeader>
-      <form action={action}>
-        <CardContent className="space-y-4">
-          {state?.error && (
-            <div className="rounded-md bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
-              {state.error}
-            </div>
-          )}
-          <div className="space-y-1.5">
-            <Label htmlFor="name">Your Full Name</Label>
-            <Input id="name" name="name" type="text" placeholder="Dr Jane Smith" required />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="practiceName">Practice Name</Label>
-            <Input
-              id="practiceName"
-              name="practiceName"
-              type="text"
-              placeholder="Smith Family Practice"
-              required
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              placeholder="admin@yourpractice.co.za"
-              required
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="new-password"
-              minLength={8}
-              placeholder="Min. 8 characters"
-              required
-            />
-          </div>
-        </CardContent>
-        <CardFooter className="flex flex-col gap-3">
-          <Button type="submit" className="w-full" disabled={pending}>
-            {pending ? "Creating account…" : "Create Account"}
-          </Button>
-          <p className="text-sm text-center text-muted-foreground">
-            Already have an account?{" "}
-            <Link href="/login" className="text-primary hover:underline font-medium">
-              Sign in
-            </Link>
-          </p>
-        </CardFooter>
-      </form>
-    </Card>
+    <div className="space-y-4">
+      <h2 className="text-lg font-semibold text-center">Create an Account</h2>
+      <div className="grid gap-4">
+        <Link href="/signup/practice" className="block">
+          <Card className="hover:border-primary hover:bg-primary/5 transition-colors cursor-pointer">
+            <CardHeader className="pb-2">
+              <div className="text-3xl mb-1">🏥</div>
+              <CardTitle className="text-base">I Run a Medical Practice</CardTitle>
+              <CardDescription>
+                List your practice, manage doctors, services, and accept online bookings.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-sm text-primary font-medium">
+              Set up your practice →
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/signup/patient" className="block">
+          <Card className="hover:border-primary hover:bg-primary/5 transition-colors cursor-pointer">
+            <CardHeader className="pb-2">
+              <div className="text-3xl mb-1">🧑‍⚕️</div>
+              <CardTitle className="text-base">I&apos;m Looking for a Doctor</CardTitle>
+              <CardDescription>
+                Browse practices near you and book appointments online, 24/7.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-sm text-primary font-medium">
+              Create patient account →
+            </CardContent>
+          </Card>
+        </Link>
+      </div>
+
+      <p className="text-sm text-center text-muted-foreground pt-2">
+        Already have an account?{" "}
+        <Link href="/login" className="text-primary hover:underline font-medium">
+          Sign in
+        </Link>
+      </p>
+    </div>
   );
 }

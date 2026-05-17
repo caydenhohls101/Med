@@ -23,47 +23,65 @@ export default async function DoctorsPage() {
     .order("full_name");
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold">Doctors</h1>
-        <p className="text-muted-foreground mt-1">Manage doctors in your practice</p>
+        <p className="text-muted-foreground mt-1">Manage the doctors in your practice</p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid xl:grid-cols-2 gap-8 items-start">
+        {/* Current doctors */}
         <div className="space-y-4">
-          <h2 className="text-base font-semibold">Current Doctors ({doctors?.length ?? 0})</h2>
-          {error && <p className="text-sm text-destructive">Could not load doctors. Run migrations first.</p>}
-          {!error && (!doctors || doctors.length === 0) && (
-            <p className="text-sm text-muted-foreground">No doctors added yet.</p>
+          <h2 className="text-base font-semibold text-muted-foreground uppercase tracking-wide text-xs">
+            Current Doctors ({doctors?.length ?? 0})
+          </h2>
+          {error && (
+            <p className="text-sm text-destructive bg-destructive/10 rounded-lg p-3">
+              Could not load doctors. Run database migrations first.
+            </p>
           )}
-          {doctors?.map((doc) => (
-            <Card key={doc.id}>
-              <CardContent className="pt-4 pb-4">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0"
-                    style={{ backgroundColor: doc.color }}
-                  >
-                    {doc.full_name.charAt(0)}
+          {!error && (!doctors || doctors.length === 0) && (
+            <div className="text-center py-12 border rounded-xl bg-background text-muted-foreground">
+              <div className="text-3xl mb-2">👨‍⚕️</div>
+              <p className="text-sm">No doctors added yet.</p>
+              <p className="text-xs mt-1">Add your first doctor using the form.</p>
+            </div>
+          )}
+          <div className="space-y-3">
+            {doctors?.map((doc) => (
+              <Card key={doc.id} className="rounded-xl">
+                <CardContent className="pt-4 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold shrink-0"
+                      style={{ backgroundColor: doc.color }}
+                    >
+                      {doc.full_name.charAt(0)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold">{doc.title} {doc.full_name}</div>
+                      {doc.specialty && <div className="text-sm text-muted-foreground">{doc.specialty}</div>}
+                      <div className="flex gap-2 mt-1.5 flex-wrap text-xs text-muted-foreground">
+                        {doc.hpcsa_number && <span>HPCSA: {doc.hpcsa_number}</span>}
+                        <span>{doc.default_appointment_duration_minutes} min slots</span>
+                      </div>
+                    </div>
+                    <Badge variant={doc.active ? "success" : "outline"} className="shrink-0">
+                      {doc.active ? "Active" : "Inactive"}
+                    </Badge>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium">{doc.title} {doc.full_name}</div>
-                    {doc.specialty && <div className="text-sm text-muted-foreground">{doc.specialty}</div>}
-                    {doc.hpcsa_number && <div className="text-xs text-muted-foreground">HPCSA: {doc.hpcsa_number}</div>}
-                    <div className="text-xs text-muted-foreground">{doc.default_appointment_duration_minutes} min slots</div>
-                  </div>
-                  <Badge variant={doc.active ? "success" : "outline"}>
-                    {doc.active ? "Active" : "Inactive"}
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
 
-        <div>
-          <h2 className="text-base font-semibold mb-4">Add Doctor</h2>
-          <Card>
+        {/* Add doctor form */}
+        <div className="space-y-4">
+          <h2 className="text-base font-semibold text-muted-foreground uppercase tracking-wide text-xs">
+            Add Doctor
+          </h2>
+          <Card className="rounded-xl">
             <CardContent className="pt-6">
               <AddDoctorForm practiceId={practiceUser?.practice_id ?? ""} />
             </CardContent>

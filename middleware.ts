@@ -2,7 +2,8 @@ import { type CookieOptions, createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request });
+  // Build the initial response — must be recreated inside setAll() to carry cookies
+  let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
     process.env["NEXT_PUBLIC_SUPABASE_URL"]!,
@@ -13,49 +14,48 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
+          // Write cookies onto the request so later getAll() calls see them
           for (const { name, value } of cookiesToSet) {
             request.cookies.set(name, value);
           }
-          supabaseResponse = NextResponse.next({ request });
+          // Recreate the response so the cookies are sent to the browser
+          response = NextResponse.next({ request });
           for (const { name, value, options } of cookiesToSet) {
-            supabaseResponse.cookies.set(name, value, options);
+            response.cookies.set(name, value, options);
           }
         },
       },
-    },
+    }
   );
 
-  // Refresh the session without blocking — required by @supabase/ssr
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // IMPORTANT: always call getUser() — this refreshes the JWT if needed
+  const { data: { user } } = await supabase.auth.getUser();
 
-  // Redirect unauthenticated users away from /dashboard
-  if (!user && request.nextUrl.pathname.startsWith("/dashboard")) {
+  const { pathname } = request.nextUrl;
+
+  // 1. Protect /dashboard — redirect unauthenticated users to login
+  if (!user && pathname.startsWith("/dashboard")) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";
-    loginUrl.searchParams.set("next", request.nextUrl.pathname);
+    loginUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // Redirect authenticated users away from login/signup to dashboard
-  if (
-    user &&
-    (request.nextUrl.pathname === "/login" ||
-      request.nextUrl.pathname === "/signup")
-  ) {
-    const dashboardUrl = request.nextUrl.clone();
-    dashboardUrl.pathname = "/dashboard";
-    dashboardUrl.search = "";
-    return NextResponse.redirect(dashboardUrl);
+  // 2. Authenticated users on /login → redirect them home
+  //    (avoids confusing "you're already logged in" state)
+  //    The homepage / will show Sign Out via the navbar.
+  if (user && pathname === "/login") {
+    const home = request.nextUrl.clone();
+    home.pathname = "/";
+    home.search = "";
+    return NextResponse.redirect(home);
   }
 
-  return supabaseResponse;
+  return response;
 }
 
 export const config = {
   matcher: [
-    // Run on all routes except static files, _next internals, and API health check
-    "/((?!_next/static|_next/image|favicon.ico|api/health|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|api/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

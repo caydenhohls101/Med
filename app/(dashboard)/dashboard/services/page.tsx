@@ -23,46 +23,66 @@ export default async function ServicesPage() {
     .order("display_order");
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold">Services</h1>
-        <p className="text-muted-foreground mt-1">Manage what your practice offers</p>
+        <p className="text-muted-foreground mt-1">What your practice offers to patients</p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid xl:grid-cols-2 gap-8 items-start">
+        {/* Current services */}
         <div className="space-y-4">
-          <h2 className="text-base font-semibold">Current Services ({services?.length ?? 0})</h2>
-          {error && <p className="text-sm text-destructive">Could not load services. Run migrations first.</p>}
-          {!error && (!services || services.length === 0) && (
-            <p className="text-sm text-muted-foreground">No services added yet.</p>
+          <h2 className="text-base font-semibold text-muted-foreground uppercase tracking-wide text-xs">
+            Current Services ({services?.length ?? 0})
+          </h2>
+          {error && (
+            <p className="text-sm text-destructive bg-destructive/10 rounded-lg p-3">
+              Could not load services. Run database migrations first.
+            </p>
           )}
-          {services?.map((svc) => (
-            <Card key={svc.id}>
-              <CardContent className="pt-4 pb-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="font-medium">{svc.name}</div>
-                    {svc.description && <div className="text-sm text-muted-foreground">{svc.description}</div>}
-                    <div className="flex gap-2 mt-2 flex-wrap">
-                      <Badge variant="secondary">{svc.duration_minutes} min</Badge>
-                      {svc.price_cents > 0 && (
-                        <Badge variant="outline">R{(svc.price_cents / 100).toFixed(2)}</Badge>
+          {!error && (!services || services.length === 0) && (
+            <div className="text-center py-12 border rounded-xl bg-background text-muted-foreground">
+              <div className="text-3xl mb-2">🩺</div>
+              <p className="text-sm">No services added yet.</p>
+              <p className="text-xs mt-1">Add services so patients can choose when booking.</p>
+            </div>
+          )}
+          <div className="space-y-3">
+            {services?.map((svc) => (
+              <Card key={svc.id} className="rounded-xl">
+                <CardContent className="pt-4 pb-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold">{svc.name}</div>
+                      {svc.description && (
+                        <div className="text-sm text-muted-foreground mt-0.5">{svc.description}</div>
                       )}
-                      {svc.requires_referral && <Badge variant="outline">Referral</Badge>}
+                      <div className="flex gap-2 mt-2 flex-wrap">
+                        <Badge variant="secondary">{svc.duration_minutes} min</Badge>
+                        {svc.price_cents > 0 && (
+                          <Badge variant="outline">R{(svc.price_cents / 100).toFixed(2)}</Badge>
+                        )}
+                        {svc.requires_referral && (
+                          <Badge variant="outline">Referral needed</Badge>
+                        )}
+                      </div>
                     </div>
+                    <Badge variant={svc.active ? "success" : "outline"} className="shrink-0 mt-0.5">
+                      {svc.active ? "Active" : "Inactive"}
+                    </Badge>
                   </div>
-                  <Badge variant={svc.active ? "success" : "outline"}>
-                    {svc.active ? "Active" : "Inactive"}
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
 
-        <div>
-          <h2 className="text-base font-semibold mb-4">Add Service</h2>
-          <Card>
+        {/* Add service form */}
+        <div className="space-y-4">
+          <h2 className="text-base font-semibold text-muted-foreground uppercase tracking-wide text-xs">
+            Add Service
+          </h2>
+          <Card className="rounded-xl">
             <CardContent className="pt-6">
               <AddServiceForm practiceId={practiceUser?.practice_id ?? ""} />
             </CardContent>

@@ -46,6 +46,9 @@ function LoginForm() {
             No account?{" "}
             <Link href="/signup" className="text-primary hover:underline font-medium">Create one</Link>
           </p>
+          <Link href="/browse" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            ← Continue browsing without signing in
+          </Link>
         </CardFooter>
       </form>
     </Card>

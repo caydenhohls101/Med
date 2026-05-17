@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getCachedUser, getCachedPracticeUser } from "@/lib/supabase/cached";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
@@ -13,19 +14,16 @@ const statusVariant: Record<string, "default" | "success" | "warning" | "destruc
 };
 
 export default async function DashboardPage() {
+  // Both cached — no extra network calls vs layout
+  const [user, practiceUser] = await Promise.all([getCachedUser(), getCachedPracticeUser()]);
+  if (!user || !practiceUser) return null;
+
+  const role = practiceUser.role;
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
+  const today = new Date();
+  const todayStr = format(today, "yyyy-MM-dd");
 
-  const { data: practiceUser } = await supabase
-    .from("practice_users")
-    .select("role, practice_id")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  const role = practiceUser?.role;
-
-  // For doctors, find their linked doctor record
+  // For doctors: resolve their doctor record in parallel with nothing else to wait on
   let doctorId: string | null = null;
   if (role === "doctor") {
     const { data: doctor } = await supabase
@@ -35,9 +33,6 @@ export default async function DashboardPage() {
       .maybeSingle();
     doctorId = doctor?.id ?? null;
   }
-
-  const today = new Date();
-  const todayStr = format(today, "yyyy-MM-dd");
 
   let query = supabase
     .from("appointments")
@@ -51,9 +46,7 @@ export default async function DashboardPage() {
     .lte("starts_at", `${todayStr}T23:59:59+02:00`)
     .order("starts_at");
 
-  if (doctorId) {
-    query = query.eq("doctor_id", doctorId);
-  }
+  if (doctorId) query = query.eq("doctor_id", doctorId);
 
   const { data: appointments, error } = await query;
 
@@ -72,14 +65,12 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
         <StatCard label="Total Today" value={stats.total} />
         <StatCard label="Confirmed" value={stats.confirmed} />
         <StatCard label="Pending" value={stats.pending} />
       </div>
 
-      {/* Appointment list */}
       <Card>
         <CardHeader>
           <CardTitle>Today&apos;s Appointments</CardTitle>
@@ -104,13 +95,9 @@ export default async function DashboardPage() {
                 return (
                   <div key={appt.id} className="flex items-start justify-between gap-4 p-4 rounded-lg border bg-background">
                     <div className="flex gap-4 items-start">
-                      <div className="text-sm font-mono font-bold text-primary w-12 shrink-0 pt-0.5">
-                        {time}
-                      </div>
+                      <div className="text-sm font-mono font-bold text-primary w-12 shrink-0 pt-0.5">{time}</div>
                       <div>
-                        <div className="font-medium">
-                          {patient?.first_name} {patient?.last_name}
-                        </div>
+                        <div className="font-medium">{patient?.first_name} {patient?.last_name}</div>
                         <div className="text-sm text-muted-foreground">
                           {service?.name} · {doctor?.title} {doctor?.full_name}
                         </div>
@@ -123,9 +110,7 @@ export default async function DashboardPage() {
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-2 shrink-0">
-                      <Badge variant={statusVariant[appt.status] ?? "outline"}>
-                        {appt.status}
-                      </Badge>
+                      <Badge variant={statusVariant[appt.status] ?? "outline"}>{appt.status}</Badge>
                       <StatusUpdater appointmentId={appt.id} currentStatus={appt.status} />
                     </div>
                   </div>

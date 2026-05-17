@@ -103,24 +103,26 @@ export function NavbarAvatar({ user }: { user: NavUser }) {
             />
           </label>
 
-          {/* Dashboard link for staff */}
-          {user.accountType !== "patient" && (
-            <Link
-              href="/dashboard"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-muted transition-colors"
-            >
+          {/* Admin link */}
+          {user.accountType === "admin" && (
+            <Link href="/admin/prospects" onClick={() => setOpen(false)}
+              className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-amber-50 text-amber-800 transition-colors font-medium">
+              <span className="text-base">🛡</span> Admin Panel
+            </Link>
+          )}
+
+          {/* Dashboard link for practice staff */}
+          {user.accountType !== "patient" && user.accountType !== "admin" && (
+            <Link href="/dashboard" onClick={() => setOpen(false)}
+              className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-muted transition-colors">
               <span className="text-base">📊</span> Dashboard
             </Link>
           )}
 
           {/* Find a doctor for patients */}
           {user.accountType === "patient" && (
-            <Link
-              href="/browse"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-muted transition-colors"
-            >
+            <Link href="/browse" onClick={() => setOpen(false)}
+              className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-muted transition-colors">
               <span className="text-base">🔍</span> Find a Doctor
             </Link>
           )}

@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { env } from "@/lib/env";
 import { redirect } from "next/navigation";
 
 // ── Geocode a SA suburb + city using Nominatim (free, no API key) ──
@@ -155,6 +156,40 @@ export async function signupPatient(
   redirect(next || "/browse");
 }
 
+// ── Platform admin signup ─────────────────────────────────────────
+export async function signupAdmin(
+  _prev: { error: string } | null,
+  formData: FormData
+) {
+  const name       = formData.get("name") as string;
+  const email      = formData.get("email") as string;
+  const password   = formData.get("password") as string;
+  const adminCode  = formData.get("adminCode") as string;
+
+  const expectedCode = env.PLATFORM_ADMIN_CODE;
+  if (!expectedCode || adminCode.trim() !== expectedCode.trim()) {
+    return { error: "Invalid admin access code." };
+  }
+  if (!name || !email || !password) return { error: "All fields are required." };
+
+  const serviceClient = createServiceClient();
+  const { error: createError } = await serviceClient.auth.admin.createUser({
+    email,
+    password,
+    user_metadata: { full_name: name, account_type: "admin" },
+    email_confirm: true,
+  });
+
+  if (createError) return { error: createError.message };
+
+  // Sign them in immediately
+  const client = await createClient();
+  const { error: signInError } = await client.auth.signInWithPassword({ email, password });
+  if (signInError) return { error: "Account created — please sign in." };
+
+  redirect("/admin/prospects");
+}
+
 // ── Unified login ─────────────────────────────────────────────────
 export async function login(_prev: { error: string } | null, formData: FormData) {
   const email    = formData.get("email") as string;
@@ -166,7 +201,15 @@ export async function login(_prev: { error: string } | null, formData: FormData)
 
   if (error) return { error: error.message };
 
-  // Redirect: practice staff → dashboard, patients → next or /browse
+  const accountType = data.user.user_metadata?.account_type as string | undefined;
+
+  // Platform admins go to the prospects tool
+  const adminEmails = (env.PLATFORM_ADMIN_EMAILS ?? "").split(",").map((e) => e.trim()).filter(Boolean);
+  if (adminEmails.includes(data.user.email ?? "")) {
+    redirect(next || "/admin/prospects");
+  }
+
+  // Practice staff → dashboard, patients → next or /browse
   const { data: pu } = await supabase
     .from("practice_users")
     .select("id")

@@ -1,11 +1,18 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { env } from "@/lib/env";
 import { NavbarAvatar } from "./navbar-avatar";
 import { Button } from "./ui/button";
 
 export async function Navbar() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+
+  const adminEmails = (env.PLATFORM_ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((e) => e.trim())
+    .filter(Boolean);
+  const isPlatformAdmin = user && adminEmails.includes(user.email ?? "");
 
   return (
     <nav className="border-b bg-background/95 backdrop-blur-sm sticky top-0 z-40">
@@ -29,6 +36,14 @@ export async function Navbar() {
           >
             For Practices
           </Link>
+          {isPlatformAdmin && (
+            <Link
+              href="/admin/prospects"
+              className="text-sm text-amber-700 hover:text-amber-900 px-3 py-1.5 rounded-md hover:bg-amber-50 transition-colors font-medium"
+            >
+              🛡 Admin
+            </Link>
+          )}
         </div>
 
         {/* Right side */}
@@ -40,7 +55,7 @@ export async function Navbar() {
                 email: user.email ?? "",
                 fullName: user.user_metadata?.full_name,
                 avatarUrl: user.user_metadata?.avatar_url,
-                accountType: user.user_metadata?.account_type,
+                accountType: isPlatformAdmin ? "admin" : user.user_metadata?.account_type,
               }}
             />
           ) : (

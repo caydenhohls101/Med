@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { sendWhatsApp, confirmationMessage } from "@/lib/notifications/whatsapp";
+import { format } from "date-fns";
 
 function generateRef(): string {
   const now = new Date();
@@ -133,7 +135,137 @@ export async function createBooking(data: {
 
   if (apptError) return { error: apptError.message };
 
+  // Send WhatsApp confirmation — non-blocking, won't fail the booking
+  const [{ data: practice }, { data: doctor }] = await Promise.all([
+    supabase.from("practices").select("name, phone").eq("id", data.practiceId).single(),
+    supabase.from("doctors").select("full_name, title").eq("id", data.doctorId).single(),
+  ]);
+
+  if (practice && doctor) {
+    const startDate = new Date(data.startsAt);
+    await sendWhatsApp(
+      mobile,
+      confirmationMessage({
+        patientName: data.firstName,
+        patientMobile: mobile,
+        practiceName: practice.name,
+        doctorTitle: doctor.title,
+        doctorName: doctor.full_name,
+        date: format(startDate, "EEEE, d MMMM yyyy"),
+        time: format(startDate, "HH:mm"),
+        referenceNumber: appt.reference_number,
+        practicePhone: practice.phone ?? undefined,
+      })
+    );
+  }
+
   return { referenceNumber: appt.reference_number };
+}
+
+/**
+ * Patient-facing cancellation. Validates ownership by email, then sends
+ * urgent WhatsApp to practice + doctor before updating the status.
+ */
+export async function cancelPatientBooking(
+  referenceNumber: string,
+  patientEmail: string,
+  reason?: string
+): Promise<{ success?: true; error?: string }> {
+  const supabase = createServiceClient();
+
+  // 1. Find the appointment by reference, join patient email to verify ownership
+  const { data: appt } = await supabase
+    .from("appointments")
+    .select(`
+      id, starts_at, status, reference_number, practice_id, doctor_id,
+      patients(email, first_name, last_name, mobile),
+      doctors(full_name, title, user_id),
+      services(name),
+      practices:practice_id(name, phone, email)
+    `)
+    .eq("reference_number", referenceNumber)
+    .maybeSingle();
+
+  if (!appt) return { error: "Booking not found." };
+
+  const patient  = appt.patients  as { email: string; first_name: string; last_name: string; mobile: string } | null;
+  const doctor   = appt.doctors   as { full_name: string; title: string; user_id: string | null } | null;
+  const service  = appt.services  as { name: string } | null;
+  const practice = (appt as any).practices as { name: string; phone: string | null; email: string | null } | null;
+
+  // 2. Verify this patient owns the booking
+  if (!patient || patient.email.toLowerCase() !== patientEmail.toLowerCase()) {
+    return { error: "You can only cancel your own bookings." };
+  }
+
+  // 3. Only allow pending/confirmed
+  if (!["pending", "confirmed"].includes(appt.status)) {
+    return { error: `This booking is already ${appt.status} and cannot be cancelled.` };
+  }
+
+  // 4. Don't allow cancelling in the past
+  if (new Date(appt.starts_at) < new Date()) {
+    return { error: "Past appointments cannot be cancelled online. Please contact the practice." };
+  }
+
+  // 5. Update status
+  const { error: updateErr } = await supabase
+    .from("appointments")
+    .update({ status: "cancelled", cancelled_at: new Date().toISOString(), cancel_reason: reason ?? "Patient cancelled online" })
+    .eq("id", appt.id);
+
+  if (updateErr) return { error: updateErr.message };
+
+  // 6. Build notification details
+  const apptDate      = new Date(appt.starts_at);
+  const isToday       = format(apptDate, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
+  const dateFormatted = format(apptDate, "EEEE, d MMMM yyyy");
+  const timeFormatted = format(apptDate, "HH:mm");
+  const urgentPrefix  = isToday ? "🚨 *SAME-DAY CANCELLATION — Appointment is TODAY!*\n\n" : "";
+
+  // WhatsApp to practice
+  if (practice?.phone) {
+    const msg = [
+      `${urgentPrefix}⚠️ *BOOKING CANCELLATION*`,
+      ``,
+      `A patient has cancelled their appointment online.`,
+      ``,
+      `👤 *Patient:* ${patient.first_name} ${patient.last_name}`,
+      `📞 *Patient phone:* ${patient.mobile}`,
+      `📋 *Ref:* ${appt.reference_number}`,
+      `📅 *Date:* ${dateFormatted}`,
+      `🕐 *Time:* ${timeFormatted}`,
+      `👨‍⚕️ *Doctor:* ${doctor?.title} ${doctor?.full_name}`,
+      `🩺 *Service:* ${service?.name}`,
+      reason ? `💬 *Reason:* ${reason}` : ``,
+      ``,
+      `Please update your schedule accordingly.`,
+      ``,
+      `_MediBook SA_`,
+    ].filter(Boolean).join("\n");
+
+    await sendWhatsApp(practice.phone, msg);
+  }
+
+  // Confirmation to patient
+  const patientMsg = [
+    `Hi ${patient.first_name},`,
+    ``,
+    `Your appointment has been *cancelled* as requested.`,
+    ``,
+    `📋 *Ref:* ${appt.reference_number}`,
+    `🏥 ${practice?.name}`,
+    `📅 ${dateFormatted} at ${timeFormatted}`,
+    ``,
+    practice?.phone ? `To rebook, call ${practice.phone} or visit our website.` : ``,
+    ``,
+    `_MediBook SA_`,
+  ].filter(Boolean).join("\n");
+
+  await sendWhatsApp(patient.mobile, patientMsg);
+
+  revalidatePath("/");
+  return { success: true };
 }
 
 export async function updateAppointmentStatus(

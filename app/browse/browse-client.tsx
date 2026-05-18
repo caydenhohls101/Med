@@ -107,27 +107,33 @@ export function BrowseClient({ practices }: { practices: Practice[] }) {
               <button
                 key={p.id}
                 onClick={() => handleSelect(p.id)}
-                className={`w-full text-left border-b transition-colors p-4 flex items-start gap-3 ${
-                  isSelected ? "bg-primary/5 border-l-4 border-l-primary pl-3" : "hover:bg-muted/50"
+                className={`glass-btn w-full text-left border-b p-4 flex items-start gap-3 group rounded-none ${
+                  isSelected
+                    ? "bg-primary/8 border-l-4 border-l-primary pl-3"
+                    : ""
                 }`}
               >
-                {/* Avatar circle */}
+                {/* Colored avatar */}
                 <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 mt-0.5"
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0 mt-0.5 shadow-sm transition-transform duration-200 group-hover:scale-110 ${isSelected ? "scale-110" : ""}`}
                   style={{ backgroundColor: color }}
                 >
                   {p.name.charAt(0)}
                 </div>
-                <div className="min-w-0">
-                  <div className="font-semibold text-sm leading-tight">{p.name}</div>
+                <div className="min-w-0 flex-1">
+                  <div className={`font-semibold text-sm leading-tight ${isSelected ? "text-primary" : ""}`}>
+                    {p.name}
+                  </div>
                   <div className="text-xs text-muted-foreground mt-0.5">
                     {p.suburb}, {p.city}
                   </div>
                   {p.phone && <div className="text-xs text-muted-foreground">{p.phone}</div>}
-                  {p.latitude == null && (
-                    <span className="text-xs text-muted-foreground/60 italic">No map location</span>
-                  )}
+                  {p.latitude != null && <span className="text-[10px] text-green-600 font-medium">📍 On map</span>}
                 </div>
+                {/* Arrow always visible, shifts on hover/selected */}
+                <span className={`text-primary text-sm font-bold shrink-0 self-center transition-transform duration-200 group-hover:translate-x-1 ${isSelected ? "translate-x-1" : "translate-x-0 opacity-40"}`}>
+                  →
+                </span>
               </button>
             );
           })}

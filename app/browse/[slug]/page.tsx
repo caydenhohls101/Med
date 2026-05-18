@@ -3,7 +3,7 @@ import Link from "next/link";
 import { createServiceClient } from "@/lib/supabase/service";
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { LiquidCard, CardContent, CardHeader, CardTitle } from "@/components/ui/liquid-glass-card";
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/navbar";
 import { DetailMap } from "./practice-map-wrapper";
@@ -104,7 +104,7 @@ export default async function PracticeDetailPage({ params }: Props) {
 
         <div className="grid md:grid-cols-2 gap-6">
           {/* Doctors */}
-          <Card className="rounded-xl">
+          <LiquidCard className="rounded-xl animate-in fade-in slide-in-from-bottom-4 duration-500">
             <CardHeader>
               <CardTitle>Our Doctors ({doctors?.length ?? 0})</CardTitle>
             </CardHeader>
@@ -129,10 +129,10 @@ export default async function PracticeDetailPage({ params }: Props) {
                 ))
               )}
             </CardContent>
-          </Card>
+          </LiquidCard>
 
           {/* Services */}
-          <Card className="rounded-xl">
+          <LiquidCard className="rounded-xl animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
             <CardHeader>
               <CardTitle>Services ({services?.length ?? 0})</CardTitle>
             </CardHeader>
@@ -157,7 +157,7 @@ export default async function PracticeDetailPage({ params }: Props) {
                 ))
               )}
             </CardContent>
-          </Card>
+          </LiquidCard>
         </div>
 
         {/* Bottom CTA */}

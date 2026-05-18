@@ -10,6 +10,9 @@ export const env = createEnv({
     // Resend
     RESEND_API_KEY: z.string().min(1).optional(),
     RESEND_FROM_EMAIL: z.string().email().default("bookings@medibook.co.za"),
+    // Platform admin
+    PLATFORM_ADMIN_EMAILS: z.string().optional(),
+    PLATFORM_ADMIN_CODE: z.string().optional(),
     // Sentry
     SENTRY_DSN: z.string().url().optional(),
     SENTRY_AUTH_TOKEN: z.string().optional(),
@@ -36,6 +39,8 @@ export const env = createEnv({
     SUPABASE_SERVICE_ROLE_KEY: process.env["SUPABASE_SERVICE_ROLE_KEY"],
     RESEND_API_KEY: process.env["RESEND_API_KEY"],
     RESEND_FROM_EMAIL: process.env["RESEND_FROM_EMAIL"],
+    PLATFORM_ADMIN_EMAILS: process.env["PLATFORM_ADMIN_EMAILS"],
+    PLATFORM_ADMIN_CODE: process.env["PLATFORM_ADMIN_CODE"],
     SENTRY_DSN: process.env["SENTRY_DSN"],
     SENTRY_AUTH_TOKEN: process.env["SENTRY_AUTH_TOKEN"],
     POSTHOG_API_KEY: process.env["POSTHOG_API_KEY"],

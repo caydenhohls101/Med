@@ -28,10 +28,19 @@ interface Service {
   requires_referral: boolean;
 }
 
+interface Prefill {
+  firstName: string;
+  lastName: string;
+  email: string;
+  mobile: string;
+}
+
 interface Props {
   practice: { id: string; name: string; slug: string };
   doctors: Doctor[];
   services: Service[];
+  prefill?: Prefill | null;
+  defaultDate?: string; // YYYY-MM-DD from ?date= query param
 }
 
 type Step = "doctor" | "service" | "datetime" | "details" | "success";
@@ -40,11 +49,12 @@ const STEPS: Step[] = ["doctor", "service", "datetime", "details", "success"];
 
 const today = new Date().toISOString().split("T")[0]!;
 
-export function BookingSteps({ practice, doctors, services }: Props) {
+export function BookingSteps({ practice, doctors, services, prefill, defaultDate }: Props) {
   const [step, setStep] = useState<Step>("doctor");
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
-  const [selectedDate, setSelectedDate] = useState("");
+  // Pre-fill the date from the ?date= query param (passed from the patient calendar)
+  const [selectedDate, setSelectedDate] = useState(defaultDate ?? "");
   const [slots, setSlots] = useState<{ time: string; startsAt: string; endsAt: string }[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<{ time: string; startsAt: string; endsAt: string } | null>(null);
   const [loadingSlots, setLoadingSlots] = useState(false);
@@ -70,7 +80,7 @@ export function BookingSteps({ practice, doctors, services }: Props) {
     }
   }
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     const form = e.currentTarget;
@@ -93,7 +103,7 @@ export function BookingSteps({ practice, doctors, services }: Props) {
         lastName,
         email,
         mobile,
-        notes: notes || undefined,
+        ...(notes ? { notes } : {}),
       });
 
       if (result.error) {
@@ -180,7 +190,7 @@ export function BookingSteps({ practice, doctors, services }: Props) {
               <button
                 key={doctor.id}
                 onClick={() => { setSelectedDoctor(doctor); setStep("service"); }}
-                className="text-left p-4 rounded-lg border bg-background hover:border-primary hover:bg-primary/5 transition-colors"
+                className="glass-card text-left p-4 rounded-2xl border bg-background w-full"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm" style={{ backgroundColor: doctor.color }}>
@@ -212,8 +222,15 @@ export function BookingSteps({ practice, doctors, services }: Props) {
             {services.map((service) => (
               <button
                 key={service.id}
-                onClick={() => { setSelectedService(service); setStep("datetime"); }}
-                className="text-left p-4 rounded-lg border bg-background hover:border-primary hover:bg-primary/5 transition-colors"
+                onClick={() => {
+                  setSelectedService(service);
+                  setStep("datetime");
+                  // If a date was pre-selected (from the calendar), load slots immediately
+                  if (selectedDate && selectedDoctor) {
+                    loadSlots(selectedDate, selectedDoctor.id, service.duration_minutes);
+                  }
+                }}
+                className="glass-card text-left p-4 rounded-2xl border bg-background w-full"
               >
                 <div className="flex items-start justify-between">
                   <div>
@@ -244,6 +261,13 @@ export function BookingSteps({ practice, doctors, services }: Props) {
             <h2 className="text-lg font-semibold">Choose a Date & Time</h2>
           </div>
 
+          {defaultDate && selectedDate === defaultDate && (
+            <div className="flex items-center gap-2 text-sm bg-primary/5 border border-primary/20 rounded-xl px-4 py-2.5 text-primary">
+              <span>📅</span>
+              <span>Date pre-selected from your calendar — <strong>{new Date(defaultDate + "T12:00:00").toLocaleDateString("en-ZA", { weekday: "long", day: "numeric", month: "long" })}</strong>. Change it below if needed.</span>
+            </div>
+          )}
+
           <Card>
             <CardContent className="pt-6">
               <div className="space-y-1.5">
@@ -271,10 +295,10 @@ export function BookingSteps({ practice, doctors, services }: Props) {
                       <button
                         key={slot.startsAt}
                         onClick={() => setSelectedSlot(slot)}
-                        className={`py-2 px-3 text-sm rounded-md border font-mono transition-colors ${
+                        className={`py-2 px-3 text-sm rounded-xl border font-mono transition-all ${
                           selectedSlot?.startsAt === slot.startsAt
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "bg-background hover:border-primary hover:bg-primary/5"
+                            ? "bg-primary text-primary-foreground border-primary shadow-lg scale-105"
+                            : "glass-btn bg-background"
                         }`}
                       >
                         {slot.time}
@@ -320,23 +344,28 @@ export function BookingSteps({ practice, doctors, services }: Props) {
                     {error}
                   </div>
                 )}
+                {prefill && (
+                  <div className="rounded-md bg-primary/5 border border-primary/20 px-3 py-2 text-xs text-primary flex items-center gap-2">
+                    <span>✓</span> Details pre-filled from your account — update if needed.
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label htmlFor="firstName">First Name</Label>
-                    <Input id="firstName" name="firstName" required placeholder="Jane" />
+                    <Input id="firstName" name="firstName" required placeholder="Jane" defaultValue={prefill?.firstName} />
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="lastName">Last Name</Label>
-                    <Input id="lastName" name="lastName" required placeholder="Smith" />
+                    <Input id="lastName" name="lastName" required placeholder="Smith" defaultValue={prefill?.lastName} />
                   </div>
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" name="email" type="email" required placeholder="jane@email.com" />
+                  <Input id="email" name="email" type="email" required placeholder="jane@email.com" defaultValue={prefill?.email} />
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="mobile">Mobile Number</Label>
-                  <Input id="mobile" name="mobile" type="tel" required placeholder="0821234567" />
+                  <Input id="mobile" name="mobile" type="tel" required placeholder="0821234567" defaultValue={prefill?.mobile} />
                   <p className="text-xs text-muted-foreground">South African number (0xx or +27xx)</p>
                 </div>
                 <div className="space-y-1.5">

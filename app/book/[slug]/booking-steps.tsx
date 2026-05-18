@@ -28,10 +28,18 @@ interface Service {
   requires_referral: boolean;
 }
 
+interface Prefill {
+  firstName: string;
+  lastName: string;
+  email: string;
+  mobile: string;
+}
+
 interface Props {
   practice: { id: string; name: string; slug: string };
   doctors: Doctor[];
   services: Service[];
+  prefill?: Prefill | null;
 }
 
 type Step = "doctor" | "service" | "datetime" | "details" | "success";
@@ -40,7 +48,7 @@ const STEPS: Step[] = ["doctor", "service", "datetime", "details", "success"];
 
 const today = new Date().toISOString().split("T")[0]!;
 
-export function BookingSteps({ practice, doctors, services }: Props) {
+export function BookingSteps({ practice, doctors, services, prefill }: Props) {
   const [step, setStep] = useState<Step>("doctor");
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
@@ -320,23 +328,28 @@ export function BookingSteps({ practice, doctors, services }: Props) {
                     {error}
                   </div>
                 )}
+                {prefill && (
+                  <div className="rounded-md bg-primary/5 border border-primary/20 px-3 py-2 text-xs text-primary flex items-center gap-2">
+                    <span>✓</span> Details pre-filled from your account — update if needed.
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label htmlFor="firstName">First Name</Label>
-                    <Input id="firstName" name="firstName" required placeholder="Jane" />
+                    <Input id="firstName" name="firstName" required placeholder="Jane" defaultValue={prefill?.firstName} />
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="lastName">Last Name</Label>
-                    <Input id="lastName" name="lastName" required placeholder="Smith" />
+                    <Input id="lastName" name="lastName" required placeholder="Smith" defaultValue={prefill?.lastName} />
                   </div>
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" name="email" type="email" required placeholder="jane@email.com" />
+                  <Input id="email" name="email" type="email" required placeholder="jane@email.com" defaultValue={prefill?.email} />
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="mobile">Mobile Number</Label>
-                  <Input id="mobile" name="mobile" type="tel" required placeholder="0821234567" />
+                  <Input id="mobile" name="mobile" type="tel" required placeholder="0821234567" defaultValue={prefill?.mobile} />
                   <p className="text-xs text-muted-foreground">South African number (0xx or +27xx)</p>
                 </div>
                 <div className="space-y-1.5">

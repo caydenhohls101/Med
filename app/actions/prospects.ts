@@ -26,25 +26,29 @@ export async function addProspect(data: {
   const user = await assertAdmin();
   const supabase = createServiceClient();
 
-  const { error } = await supabase.from("prospects").upsert(
-    {
-      osm_id: data.osmId ?? null,
-      name: data.name,
-      address: data.address ?? null,
-      phone: data.phone ?? null,
-      website: data.website ?? null,
-      latitude: data.latitude ?? null,
-      longitude: data.longitude ?? null,
-      city: data.city ?? null,
-      status: "new",
-      added_by: user.id,
-    },
-    { onConflict: "osm_id", ignoreDuplicates: false }
-  );
+  const { data: created, error } = await supabase
+    .from("prospects")
+    .upsert(
+      {
+        osm_id: data.osmId ?? null,
+        name: data.name,
+        address: data.address ?? null,
+        phone: data.phone ?? null,
+        website: data.website ?? null,
+        latitude: data.latitude ?? null,
+        longitude: data.longitude ?? null,
+        city: data.city ?? null,
+        status: "new",
+        added_by: user.id,
+      },
+      { onConflict: "osm_id", ignoreDuplicates: false }
+    )
+    .select()
+    .single();
 
   if (error) return { error: error.message };
   revalidatePath("/admin/prospects");
-  return { success: true };
+  return { success: true, prospect: created };
 }
 
 export async function updateProspectStatus(

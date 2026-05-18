@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createServiceClient } from "@/lib/supabase/service";
+import { createClient } from "@/lib/supabase/server";
 import { BookingSteps } from "./booking-steps";
 
 interface Props {
@@ -59,19 +60,30 @@ export default async function BookPage({ params }: Props) {
     );
   }
 
-  const { data: doctors } = await supabase
-    .from("doctors")
-    .select("id, full_name, title, specialty, bio, default_appointment_duration_minutes, color")
-    .eq("practice_id", practice.id)
-    .eq("active", true)
-    .order("full_name");
+  const [{ data: doctors }, { data: services }, { data: { user } }] = await Promise.all([
+    supabase
+      .from("doctors")
+      .select("id, full_name, title, specialty, bio, default_appointment_duration_minutes, color")
+      .eq("practice_id", practice.id)
+      .eq("active", true)
+      .order("full_name"),
+    supabase
+      .from("services")
+      .select("id, name, duration_minutes, price_cents, description, requires_referral")
+      .eq("practice_id", practice.id)
+      .eq("active", true)
+      .order("display_order"),
+    createClient().then((c) => c.auth.getUser()),
+  ]);
 
-  const { data: services } = await supabase
-    .from("services")
-    .select("id, name, duration_minutes, price_cents, description, requires_referral")
-    .eq("practice_id", practice.id)
-    .eq("active", true)
-    .order("display_order");
+  const prefill = user
+    ? {
+        firstName: (user.user_metadata?.first_name as string) ?? "",
+        lastName: (user.user_metadata?.last_name as string) ?? "",
+        email: user.email ?? "",
+        mobile: (user.user_metadata?.mobile as string) ?? "",
+      }
+    : null;
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -103,6 +115,7 @@ export default async function BookPage({ params }: Props) {
           practice={{ id: practice.id, name: practice.name, slug: practice.slug }}
           doctors={doctors ?? []}
           services={services ?? []}
+          prefill={prefill}
         />
       </div>
     </div>

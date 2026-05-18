@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef } from "react";
 import Link from "next/link";
 import { addProspect, updateProspectStatus, deleteProspect } from "@/app/actions/prospects";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -79,6 +79,8 @@ export function ProspectClient({
   const [isPending, startTransition] = useTransition();
   const [prospects, setProspects] = useState(savedProspects);
   const [statusNotes, setStatusNotes] = useState<Record<string, string>>({});
+  // Cache geocoded coords so changing radius re-uses the last lookup without re-geocoding
+  const geocacheRef = useRef<{ location: string; lat: string; lon: string } | null>(null);
 
   async function handleSearch() {
     if (!locationInput.trim()) return;
@@ -88,21 +90,37 @@ export function ProspectClient({
     setSelectedId(null);
 
     try {
-      // Geocode the location first via Nominatim
-      const geoRes = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(locationInput + ", South Africa")}&format=json&limit=1&countrycodes=za`,
-        { headers: { "User-Agent": "MediBook-SA/1.0" } }
-      );
-      const geoData = await geoRes.json();
-      if (!geoData?.[0]) { setSearchError("Location not found. Try a suburb or city name."); return; }
+      let lat: string, lon: string;
+      const trimmed = locationInput.trim();
 
-      const { lat, lon } = geoData[0];
+      if (geocacheRef.current?.location === trimmed) {
+        // Re-use cached coords — only radius changed
+        ({ lat, lon } = geocacheRef.current);
+      } else {
+        const geoRes = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(trimmed + ", South Africa")}&format=json&limit=1&countrycodes=za`,
+          { headers: { "User-Agent": "MediBook-SA/1.0" } }
+        );
+        const geoData = await geoRes.json();
+        if (!geoData?.[0]) { setSearchError("Location not found. Try a suburb or city name."); return; }
+        ({ lat, lon } = geoData[0]);
+        geocacheRef.current = { location: trimmed, lat, lon };
+      }
+
       const res = await fetch(`/api/places/search?lat=${lat}&lon=${lon}&radius=${radius}`);
       const data = await res.json();
 
       if (!res.ok) { setSearchError(data.error ?? "Search failed."); return; }
-      setResults(data.results ?? []);
-      if ((data.results ?? []).length === 0) setSearchError("No medical facilities found in this area. Try a wider radius or different location.");
+      const found = data.results ?? [];
+      setResults(found);
+      if (found.length === 0) {
+        const raw = data.rawCount ?? 0;
+        setSearchError(
+          raw > 0
+            ? `Found ${raw} locations but none had a name. Try a different area or increase the radius.`
+            : "No medical facilities found. OpenStreetMap data for this area may be sparse — try a larger radius or a major city like Sandton or Cape Town CBD."
+        );
+      }
     } catch {
       setSearchError("Network error. Please try again.");
     } finally {
@@ -110,9 +128,23 @@ export function ProspectClient({
     }
   }
 
+  function handleClearSearch() {
+    setLocationInput("");
+    setSearchError("");
+    // Keep results so the user doesn't lose their search
+  }
+
+  function handleClearResults() {
+    setResults([]);
+    setSearchError("");
+    setSelectedId(null);
+    setLocationInput("");
+    geocacheRef.current = null;
+  }
+
   function handleAdd(result: SearchResult) {
     startTransition(async () => {
-      await addProspect({
+      const res = await addProspect({
         osmId: result.osmId,
         name: result.name,
         address: result.address ?? undefined,
@@ -121,8 +153,16 @@ export function ProspectClient({
         latitude: result.latitude,
         longitude: result.longitude,
       });
-      // Optimistically update results
+      // Update search result to show it's been added
       setResults((prev) => prev.map((r) => r.osmId === result.osmId ? { ...r, prospectStatus: "new" } : r));
+      // Add immediately to pipeline tab so user sees it without refreshing
+      if (res.prospect) {
+        setProspects((prev) => {
+          const already = prev.some((p) => p.osm_id === result.osmId);
+          if (already) return prev;
+          return [res.prospect as SavedProspect, ...prev];
+        });
+      }
     });
   }
 
@@ -184,17 +224,27 @@ export function ProspectClient({
               <div className="space-y-1">
                 <Label className="text-xs">Search Location</Label>
                 <div className="flex gap-2">
-                  <Input
-                    value={locationInput}
-                    onChange={(e) => setLocationInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                    placeholder="Sandton, Pretoria, Cape Town…"
-                    className="text-sm"
-                  />
+                  <div className="relative flex-1">
+                    <Input
+                      value={locationInput}
+                      onChange={(e) => setLocationInput(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                      placeholder="Sandton, Pretoria, Cape Town…"
+                      className="text-sm pr-7"
+                    />
+                    {locationInput && (
+                      <button onClick={handleClearSearch} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs" aria-label="Clear">✕</button>
+                    )}
+                  </div>
                   <Button size="sm" onClick={handleSearch} disabled={searching} className="shrink-0">
                     {searching ? "…" : "Search"}
                   </Button>
                 </div>
+                {results.length > 0 && (
+                  <button onClick={handleClearResults} className="text-xs text-muted-foreground hover:text-destructive transition-colors">
+                    ✕ Clear results
+                  </button>
+                )}
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Radius: {(radius / 1000).toFixed(1)} km</Label>

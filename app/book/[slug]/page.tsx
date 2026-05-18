@@ -2,14 +2,17 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createServiceClient } from "@/lib/supabase/service";
 import { createClient } from "@/lib/supabase/server";
+import { Navbar } from "@/components/navbar";
 import { BookingSteps } from "./booking-steps";
 
 interface Props {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ date?: string }>;
 }
 
-export default async function BookPage({ params }: Props) {
+export default async function BookPage({ params, searchParams }: Props) {
   const { slug } = await params;
+  const { date: dateParam } = await searchParams;
   const supabase = createServiceClient();
 
   const { data: practice } = await supabase
@@ -24,34 +27,21 @@ export default async function BookPage({ params }: Props) {
   if (settings?.booking_open === false) {
     return (
       <div className="min-h-screen bg-muted/30 flex flex-col">
-        <header className="bg-background border-b">
-          <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
-            <Link href="/" className="font-bold text-primary">MediBook SA</Link>
-            <Link href="/browse" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              ← Browse all practices
-            </Link>
-          </div>
-        </header>
+        <Navbar />
         <div className="flex-1 flex items-center justify-center p-8">
           <div className="text-center space-y-4">
             <div className="text-4xl">🔒</div>
             <h1 className="text-2xl font-bold">{practice.name}</h1>
             <p className="text-muted-foreground">Online booking is currently closed.</p>
             {practice.phone && (
-              <p className="text-sm">Call us on <strong>{practice.phone}</strong> to make an appointment.</p>
+              <p className="text-sm">Call us on <strong>{practice.phone}</strong></p>
             )}
             <div className="flex gap-3 justify-center pt-2">
-              <Link
-                href={`/browse/${slug}`}
-                className="inline-flex items-center px-4 py-2 rounded-lg border text-sm font-medium hover:bg-muted transition-colors"
-              >
+              <Link href={`/browse/${slug}`} className="inline-flex items-center px-4 py-2 rounded-lg border text-sm font-medium hover:bg-muted transition-colors">
                 View Practice
               </Link>
-              <Link
-                href="/browse"
-                className="inline-flex items-center px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
-              >
-                Browse Other Practices
+              <Link href="/browse" className="inline-flex items-center px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
+                Browse Practices
               </Link>
             </div>
           </div>
@@ -86,36 +76,32 @@ export default async function BookPage({ params }: Props) {
     : null;
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <header className="bg-background border-b sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
+    <div className="min-h-screen bg-muted/30 flex flex-col">
+      <Navbar />
+
+      {/* Practice context bar */}
+      <div className="bg-background border-b sticky top-14 z-30">
+        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            <Link
-              href={`/browse/${slug}`}
-              className="text-muted-foreground hover:text-foreground transition-colors text-sm shrink-0"
-            >
-              ←
-            </Link>
+            <Link href={`/browse/${slug}`} className="text-muted-foreground hover:text-foreground text-sm shrink-0">←</Link>
             <div className="min-w-0">
-              <p className="font-semibold leading-tight truncate">{practice.name}</p>
+              <p className="font-semibold leading-tight truncate text-sm">{practice.name}</p>
               <p className="text-xs text-muted-foreground">{practice.suburb}, {practice.city}</p>
             </div>
           </div>
-          <Link
-            href="/browse"
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors shrink-0"
-          >
+          <Link href="/browse" className="text-sm text-muted-foreground hover:text-foreground shrink-0">
             All Practices
           </Link>
         </div>
-      </header>
+      </div>
 
-      <div className="max-w-3xl mx-auto px-4 py-8">
+      <div className="max-w-3xl mx-auto w-full px-4 py-8">
         <BookingSteps
           practice={{ id: practice.id, name: practice.name, slug: practice.slug }}
           doctors={doctors ?? []}
           services={services ?? []}
           prefill={prefill}
+          defaultDate={dateParam}
         />
       </div>
     </div>

@@ -21,6 +21,7 @@ interface SearchResult {
   address: string | null;
   phone: string | null;
   website: string | null;
+  websiteSource: "osm" | "inferred" | "none";
   type: string;
   latitude: number;
   longitude: number;
@@ -56,9 +57,9 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
 };
 
 const PRIORITY_CONFIG = {
-  high:   { label: "No website · Not listed", dot: "bg-red-500",    badge: "bg-red-100 text-red-800" },
-  medium: { label: "Has website · Not listed",  dot: "bg-orange-400", badge: "bg-orange-100 text-orange-800" },
-  low:    { label: "Already on MediBook",       dot: "bg-green-500",  badge: "bg-green-100 text-green-800" },
+  high:   { label: "No website found", dot: "bg-red-500",    badge: "bg-red-100 text-red-800" },
+  medium: { label: "Has website",      dot: "bg-orange-400", badge: "bg-orange-100 text-orange-800" },
+  low:    { label: "On MediBook",      dot: "bg-green-500",  badge: "bg-green-100 text-green-800" },
 };
 
 export function ProspectClient({
@@ -71,6 +72,7 @@ export function ProspectClient({
   const [tab, setTab] = useState<"discover" | "pipeline">("discover");
   const [locationInput, setLocationInput] = useState("");
   const [radius, setRadius] = useState(3000);
+  const [focusSmall, setFocusSmall] = useState(true); // exclude large hospitals by default
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [searchError, setSearchError] = useState("");
@@ -107,7 +109,7 @@ export function ProspectClient({
         geocacheRef.current = { location: trimmed, lat, lon };
       }
 
-      const res = await fetch(`/api/places/search?lat=${lat}&lon=${lon}&radius=${radius}`);
+      const res = await fetch(`/api/places/search?lat=${lat}&lon=${lon}&radius=${radius}&focusSmall=${focusSmall}`);
       const data = await res.json();
 
       if (!res.ok) { setSearchError(data.error ?? "Search failed."); return; }
@@ -255,6 +257,18 @@ export function ProspectClient({
                 />
               </div>
 
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={focusSmall}
+                  onChange={(e) => setFocusSmall(e.target.checked)}
+                  className="accent-primary"
+                />
+                <span className="text-xs text-muted-foreground">
+                  Focus on GP &amp; small clinics only (exclude large hospitals)
+                </span>
+              </label>
+
               {results.length > 0 && (
                 <div className="flex gap-1 flex-wrap">
                   <span className="text-xs text-muted-foreground mr-1 self-center">Filter:</span>
@@ -299,10 +313,15 @@ export function ProspectClient({
                         <div className="font-semibold text-sm truncate">{result.name}</div>
                         {result.address && <div className="text-xs text-muted-foreground">{result.address}</div>}
                         {result.phone && <div className="text-xs text-muted-foreground">{result.phone}</div>}
-                        <div className="flex gap-1 mt-1.5 flex-wrap">
+                        <div className="flex gap-1 mt-1.5 flex-wrap items-center">
                           <span className={`text-xs px-1.5 py-0.5 rounded ${cfg.badge} font-medium`}>
-                            {cfg.label}
+                            {result.websiteSource === "inferred"
+                              ? "Likely has website"
+                              : cfg.label}
                           </span>
+                          {result.websiteSource === "inferred" && (
+                            <span className="text-xs text-muted-foreground/70 italic">(known chain)</span>
+                          )}
                           {result.website && (
                             <a href={result.website.startsWith("http") ? result.website : `https://${result.website}`}
                               target="_blank" rel="noreferrer"
@@ -310,6 +329,17 @@ export function ProspectClient({
                               className="text-xs px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 hover:underline"
                             >
                               🌐 website
+                            </a>
+                          )}
+                          {result.websiteSource === "none" && (
+                            <a
+                              href={`https://www.google.com/search?q=${encodeURIComponent(result.name + " " + (result.address ?? "South Africa"))}`}
+                              target="_blank" rel="noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-xs px-1.5 py-0.5 rounded bg-gray-50 text-gray-600 hover:underline"
+                              title="Verify on Google before adding to pipeline"
+                            >
+                              🔍 Verify
                             </a>
                           )}
                         </div>

@@ -24,6 +24,10 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
     --radius: 0.5rem;
+    /* Primary as raw RGB for glass effects */
+    --primary-h: 221.2;
+    --primary-s: 83.2%;
+    --primary-l: 53.3%;
   }
 
   .dark {
@@ -50,10 +54,74 @@
 }
 
 @layer base {
-  * {
-    @apply border-border;
+  * { @apply border-border; }
+  body { @apply bg-background text-foreground; }
+}
+
+/* ── Glass hover utility ────────────────────────────────────────
+   Usage: class="glass-hover" on any interactive element.
+   Adds a coloured glass shimmer on hover without hiding content.
+────────────────────────────────────────────────────────────────*/
+@layer utilities {
+  .glass-hover {
+    @apply transition-all duration-200;
+    position: relative;
   }
-  body {
-    @apply bg-background text-foreground;
+  .glass-hover::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary) / 0) 0%,
+      hsl(var(--primary) / 0.07) 50%,
+      hsl(var(--primary) / 0) 100%
+    );
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+  }
+  .glass-hover:hover::before { opacity: 1; }
+  .glass-hover:hover {
+    box-shadow:
+      0 0 0 1px hsl(var(--primary) / 0.18),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12),
+      0 6px 20px hsl(var(--primary) / 0.12);
+    backdrop-filter: blur(2px);
+  }
+  .glass-hover:active {
+    box-shadow:
+      0 0 0 1px hsl(var(--primary) / 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 2px 8px hsl(var(--primary) / 0.15);
+    transform: scale(0.99);
+  }
+
+  /* Button glass variant — stronger colour */
+  .glass-btn {
+    @apply glass-hover;
+    @apply relative overflow-hidden;
+  }
+  .glass-btn:hover {
+    background: hsl(var(--primary) / 0.08);
+    box-shadow:
+      0 0 0 1.5px hsl(var(--primary) / 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15),
+      0 8px 24px hsl(var(--primary) / 0.15);
+  }
+
+  /* Card glass — subtle lift on hover */
+  .glass-card {
+    @apply glass-hover;
+    @apply rounded-2xl;
+  }
+  .glass-card:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 0 0 1px hsl(var(--primary) / 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      0 12px 32px hsl(var(--primary) / 0.1),
+      0 4px 8px rgba(0, 0, 0, 0.04);
   }
 }

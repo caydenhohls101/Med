@@ -77,10 +77,11 @@ export default async function BookingsPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-3 px-2 font-medium text-muted-foreground">Date & Time</th>
+                    <th className="text-left py-3 px-2 font-medium text-muted-foreground">Appointment</th>
                     <th className="text-left py-3 px-2 font-medium text-muted-foreground">Patient</th>
                     <th className="text-left py-3 px-2 font-medium text-muted-foreground">Doctor</th>
                     <th className="text-left py-3 px-2 font-medium text-muted-foreground">Service</th>
+                    <th className="text-left py-3 px-2 font-medium text-muted-foreground">Booked</th>
                     <th className="text-left py-3 px-2 font-medium text-muted-foreground">Ref</th>
                     <th className="text-left py-3 px-2 font-medium text-muted-foreground">Status</th>
                     <th className="text-left py-3 px-2 font-medium text-muted-foreground">Actions</th>
@@ -94,19 +95,22 @@ export default async function BookingsPage() {
 
                     return (
                       <tr key={appt.id} className="border-b hover:bg-muted/50 transition-colors">
-                        <td className="py-3 px-2 font-mono text-xs">
-                          <div>{format(new Date(appt.starts_at), "d MMM yyyy")}</div>
-                          <div className="text-muted-foreground">{format(new Date(appt.starts_at), "HH:mm")}</div>
+                        <td className="py-3 px-2">
+                          <div className="font-semibold text-sm">{format(new Date(appt.starts_at), "d MMM yyyy")}</div>
+                          <div className="text-muted-foreground text-xs font-mono">{format(new Date(appt.starts_at), "HH:mm")}</div>
                         </td>
                         <td className="py-3 px-2">
-                          <div className="font-medium">{patient?.first_name} {patient?.last_name}</div>
+                          <div className="font-medium text-sm">{patient?.first_name} {patient?.last_name}</div>
                           <div className="text-muted-foreground text-xs">{patient?.mobile}</div>
                         </td>
-                        <td className="py-3 px-2">
+                        <td className="py-3 px-2 text-sm">
                           {doctor?.title} {doctor?.full_name}
                         </td>
-                        <td className="py-3 px-2">{service?.name}</td>
-                        <td className="py-3 px-2 font-mono text-xs">{appt.reference_number}</td>
+                        <td className="py-3 px-2 text-sm">{service?.name}</td>
+                        <td className="py-3 px-2 text-xs text-muted-foreground">
+                          {appt.created_at ? format(new Date(appt.created_at), "d MMM yyyy") : "—"}
+                        </td>
+                        <td className="py-3 px-2 font-mono text-xs text-muted-foreground">{appt.reference_number}</td>
                         <td className="py-3 px-2">
                           <Badge variant={statusVariant[appt.status] ?? "outline"}>
                             {appt.status}

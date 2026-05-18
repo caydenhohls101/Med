@@ -31,6 +31,12 @@ export async function Navbar() {
             Find a Doctor
           </Link>
           <Link
+            href="/pricing"
+            className="text-sm text-muted-foreground hover:text-foreground px-3 py-1.5 rounded-md hover:bg-muted transition-colors"
+          >
+            Pricing
+          </Link>
+          <Link
             href="/signup/practice"
             className="text-sm text-muted-foreground hover:text-foreground px-3 py-1.5 rounded-md hover:bg-muted transition-colors"
           >

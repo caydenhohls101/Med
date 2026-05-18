@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { getAvailableSlots, createBooking } from "@/app/actions/bookings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -123,16 +124,24 @@ export function BookingSteps({ practice, doctors, services }: Props) {
           <p className="text-xs text-muted-foreground">
             Keep your reference number safe. The practice will confirm your appointment shortly.
           </p>
-          <Button variant="outline" onClick={() => {
-            setStep("doctor");
-            setSelectedDoctor(null);
-            setSelectedService(null);
-            setSelectedDate("");
-            setSelectedSlot(null);
-            setSlots([]);
-          }}>
-            Book Another
-          </Button>
+          <div className="flex flex-col gap-2 pt-2">
+            <Link href="/" className="inline-flex items-center justify-center w-full px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
+              Back to Home
+            </Link>
+            <Link href="/browse" className="inline-flex items-center justify-center w-full px-4 py-2 rounded-lg border text-sm font-medium hover:bg-muted transition-colors">
+              Browse More Practices
+            </Link>
+            <Button variant="ghost" size="sm" onClick={() => {
+              setStep("doctor");
+              setSelectedDoctor(null);
+              setSelectedService(null);
+              setSelectedDate("");
+              setSelectedSlot(null);
+              setSlots([]);
+            }}>
+              Book Another Appointment
+            </Button>
+          </div>
         </CardContent>
       </Card>
     );

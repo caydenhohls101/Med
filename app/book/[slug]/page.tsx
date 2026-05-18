@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createServiceClient } from "@/lib/supabase/service";
 import { BookingSteps } from "./booking-steps";
@@ -21,11 +22,38 @@ export default async function BookPage({ params }: Props) {
   const settings = practice.settings as { booking_open?: boolean } | null;
   if (settings?.booking_open === false) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-8">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold">{practice.name}</h1>
-          <p className="text-muted-foreground mt-2">Online booking is currently closed.</p>
-          <p className="text-sm mt-1">Please call us on {practice.phone}</p>
+      <div className="min-h-screen bg-muted/30 flex flex-col">
+        <header className="bg-background border-b">
+          <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
+            <Link href="/" className="font-bold text-primary">MediBook SA</Link>
+            <Link href="/browse" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              ← Browse all practices
+            </Link>
+          </div>
+        </header>
+        <div className="flex-1 flex items-center justify-center p-8">
+          <div className="text-center space-y-4">
+            <div className="text-4xl">🔒</div>
+            <h1 className="text-2xl font-bold">{practice.name}</h1>
+            <p className="text-muted-foreground">Online booking is currently closed.</p>
+            {practice.phone && (
+              <p className="text-sm">Call us on <strong>{practice.phone}</strong> to make an appointment.</p>
+            )}
+            <div className="flex gap-3 justify-center pt-2">
+              <Link
+                href={`/browse/${slug}`}
+                className="inline-flex items-center px-4 py-2 rounded-lg border text-sm font-medium hover:bg-muted transition-colors"
+              >
+                View Practice
+              </Link>
+              <Link
+                href="/browse"
+                className="inline-flex items-center px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+              >
+                Browse Other Practices
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -47,12 +75,26 @@ export default async function BookPage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-muted/30">
-      <header className="bg-background border-b">
-        <div className="max-w-3xl mx-auto px-4 py-5">
-          <h1 className="text-xl font-bold">{practice.name}</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {practice.suburb}, {practice.city}
-          </p>
+      <header className="bg-background border-b sticky top-0 z-10">
+        <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <Link
+              href={`/browse/${slug}`}
+              className="text-muted-foreground hover:text-foreground transition-colors text-sm shrink-0"
+            >
+              ←
+            </Link>
+            <div className="min-w-0">
+              <p className="font-semibold leading-tight truncate">{practice.name}</p>
+              <p className="text-xs text-muted-foreground">{practice.suburb}, {practice.city}</p>
+            </div>
+          </div>
+          <Link
+            href="/browse"
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors shrink-0"
+          >
+            All Practices
+          </Link>
         </div>
       </header>
 

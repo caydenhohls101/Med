@@ -6,7 +6,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary mb-3">
             <span className="text-primary-foreground text-xl font-bold">M</span>
           </div>
-          <h1 className="text-2xl font-bold">MediBook</h1>
+          <a href="/" className="text-2xl font-bold hover:text-primary transition-colors">MediBook</a>
           <p className="text-sm text-muted-foreground mt-1">
             SA Medical Booking Platform
           </p>

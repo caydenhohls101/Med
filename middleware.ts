@@ -28,8 +28,11 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // IMPORTANT: always call getUser() — this refreshes the JWT if needed
-  const { data: { user } } = await supabase.auth.getUser();
+  // getSession() reads the JWT from the cookie — no network call to Supabase Auth.
+  // Route handlers use getUser() for server-validated access; middleware only needs
+  // the session to decide on redirects.
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user ?? null;
 
   const { pathname } = request.nextUrl;
 

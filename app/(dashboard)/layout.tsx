@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCachedPracticeUser, getCachedUser } from "@/lib/supabase/cached";
 import { NavbarAvatar } from "@/components/navbar-avatar";
+import { CalendarDays, ClipboardList, UserRound, Stethoscope, ExternalLink, type LucideIcon } from "lucide-react";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [practiceUser, user] = await Promise.all([getCachedPracticeUser(), getCachedUser()]);
@@ -29,9 +30,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
               href={`/book/${practice.slug}`}
               target="_blank"
               rel="noreferrer"
-              className="hidden md:inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary border rounded-lg px-3 py-1.5 hover:border-primary transition-colors"
+              className="hidden md:inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary border rounded-lg px-3 py-1.5 hover:border-primary transition-colors"
             >
-              🔗 Patient booking link
+              <ExternalLink className="w-3.5 h-3.5" /> Patient booking link
             </a>
           )}
           <NavbarAvatar
@@ -51,12 +52,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
         {/* Sidebar */}
         <aside className="w-56 shrink-0 bg-background border-r flex flex-col">
           <nav className="flex-1 p-3 pt-4 space-y-0.5">
-            <NavLink href="/dashboard"           label="Today"        icon="📅" />
-            <NavLink href="/dashboard/bookings"  label="All Bookings" icon="📋" />
+            <NavLink href="/dashboard"           label="Today"        icon={CalendarDays} />
+            <NavLink href="/dashboard/bookings"  label="All Bookings" icon={ClipboardList} />
             {isAdmin && (
               <>
-                <NavLink href="/dashboard/doctors"  label="Doctors"  icon="👨‍⚕️" />
-                <NavLink href="/dashboard/services" label="Services" icon="🩺" />
+                <NavLink href="/dashboard/doctors"  label="Doctors"  icon={UserRound} />
+                <NavLink href="/dashboard/services" label="Services" icon={Stethoscope} />
               </>
             )}
           </nav>
@@ -91,13 +92,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
   );
 }
 
-function NavLink({ href, label, icon }: { href: string; label: string; icon: string }) {
+function NavLink({ href, label, icon: Icon }: { href: string; label: string; icon: LucideIcon }) {
   return (
     <Link
       href={href}
       className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
     >
-      <span className="text-base">{icon}</span>
+      <Icon className="w-4 h-4 shrink-0" />
       {label}
     </Link>
   );

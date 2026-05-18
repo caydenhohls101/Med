@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AddServiceForm } from "./add-service-form";
+import { Stethoscope } from "lucide-react";
 
 export default async function ServicesPage() {
   const supabase = await createClient();
@@ -42,7 +43,7 @@ export default async function ServicesPage() {
           )}
           {!error && (!services || services.length === 0) && (
             <div className="text-center py-12 border rounded-xl bg-background text-muted-foreground">
-              <div className="text-3xl mb-2">🩺</div>
+              <Stethoscope className="w-10 h-10 mx-auto mb-2 opacity-40" />
               <p className="text-sm">No services added yet.</p>
               <p className="text-xs mt-1">Add services so patients can choose when booking.</p>
             </div>

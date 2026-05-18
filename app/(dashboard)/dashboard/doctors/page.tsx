@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AddDoctorForm } from "./add-doctor-form";
+import { UserRound } from "lucide-react";
 
 export default async function DoctorsPage() {
   const supabase = await createClient();
@@ -42,7 +43,7 @@ export default async function DoctorsPage() {
           )}
           {!error && (!doctors || doctors.length === 0) && (
             <div className="text-center py-12 border rounded-xl bg-background text-muted-foreground">
-              <div className="text-3xl mb-2">👨‍⚕️</div>
+              <UserRound className="w-10 h-10 mx-auto mb-2 opacity-40" />
               <p className="text-sm">No doctors added yet.</p>
               <p className="text-xs mt-1">Add your first doctor using the form.</p>
             </div>

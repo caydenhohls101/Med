@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import type { MapPractice } from "@/components/map/practice-map";
+import { Search, Building2, MapPin, Map, ChevronRight, X } from "lucide-react";
 
 const PracticeMap = dynamic(
   () => import("@/components/map/practice-map").then((m) => m.PracticeMap),
@@ -70,7 +71,7 @@ export function BrowseClient({ practices }: { practices: Practice[] }) {
         {/* Search */}
         <div className="p-3 border-b bg-background">
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">🔍</span>
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
             <input
               type="text"
               placeholder="Search by name, city or suburb…"
@@ -88,7 +89,7 @@ export function BrowseClient({ practices }: { practices: Practice[] }) {
         <div className="flex-1 overflow-y-auto">
           {filtered.length === 0 && (
             <div className="p-6 text-center text-muted-foreground text-sm">
-              <p className="text-2xl mb-2">🏥</p>
+              <Building2 className="w-8 h-8 mx-auto mb-2 opacity-40" />
               <p>No practices found.</p>
               {search && (
                 <button
@@ -128,12 +129,10 @@ export function BrowseClient({ practices }: { practices: Practice[] }) {
                     {p.suburb}, {p.city}
                   </div>
                   {p.phone && <div className="text-xs text-muted-foreground">{p.phone}</div>}
-                  {p.latitude != null && <span className="text-[10px] text-green-600 font-medium">📍 On map</span>}
+                  {p.latitude != null && <span className="inline-flex items-center gap-0.5 text-[10px] text-green-600 font-medium"><MapPin className="w-2.5 h-2.5" /> On map</span>}
                 </div>
                 {/* Arrow always visible, shifts on hover/selected */}
-                <span className={`text-primary text-sm font-bold shrink-0 self-center transition-transform duration-200 group-hover:translate-x-1 ${isSelected ? "translate-x-1" : "translate-x-0 opacity-40"}`}>
-                  →
-                </span>
+                <ChevronRight className={`w-4 h-4 text-primary shrink-0 self-center transition-transform duration-200 group-hover:translate-x-1 ${isSelected ? "translate-x-1" : "translate-x-0 opacity-40"}`} />
               </button>
             );
           })}
@@ -169,10 +168,10 @@ export function BrowseClient({ practices }: { practices: Practice[] }) {
                     </div>
                     <button
                       onClick={() => setSelectedId(null)}
-                      className="text-muted-foreground hover:text-foreground text-lg leading-none shrink-0 mt-0.5"
+                      className="text-muted-foreground hover:text-foreground shrink-0 mt-0.5"
                       aria-label="Close"
                     >
-                      ✕
+                      <X className="w-4 h-4" />
                     </button>
                   </div>
                   <div className="flex gap-2 mt-3">
@@ -195,7 +194,7 @@ export function BrowseClient({ practices }: { practices: Practice[] }) {
           </>
         ) : (
           <div className="w-full h-full bg-muted flex flex-col items-center justify-center text-muted-foreground gap-3">
-            <span className="text-5xl">🗺️</span>
+            <Map className="w-14 h-14 opacity-30" />
             <p className="text-sm font-medium">No practices on the map yet</p>
             <p className="text-xs">Practices appear here once they add their address during signup</p>
             <Link

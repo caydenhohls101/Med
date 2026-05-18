@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Search, ClipboardList, Building2, Globe, Check, X, ChevronRight } from "lucide-react";
 
 const ProspectMap = dynamic(() => import("./prospect-map").then((m) => m.ProspectMap), {
   ssr: false,
@@ -204,15 +205,15 @@ export function ProspectClient({
       <div className="border-b bg-background px-6 pt-4 flex items-center gap-6">
         <button
           onClick={() => setTab("discover")}
-          className={`pb-3 text-sm font-medium border-b-2 transition-colors ${tab === "discover" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}
+          className={`inline-flex items-center gap-1.5 pb-3 text-sm font-medium border-b-2 transition-colors ${tab === "discover" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}
         >
-          🔍 Discover New Practices
+          <Search className="w-3.5 h-3.5" /> Discover New Practices
         </button>
         <button
           onClick={() => setTab("pipeline")}
-          className={`pb-3 text-sm font-medium border-b-2 transition-colors ${tab === "pipeline" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}
+          className={`inline-flex items-center gap-1.5 pb-3 text-sm font-medium border-b-2 transition-colors ${tab === "pipeline" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}
         >
-          📋 My Pipeline ({prospects.length})
+          <ClipboardList className="w-3.5 h-3.5" /> My Pipeline ({prospects.length})
         </button>
       </div>
 
@@ -235,7 +236,7 @@ export function ProspectClient({
                       className="text-sm pr-7"
                     />
                     {locationInput && (
-                      <button onClick={handleClearSearch} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs" aria-label="Clear">✕</button>
+                      <button onClick={handleClearSearch} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" aria-label="Clear"><X className="w-3 h-3" /></button>
                     )}
                   </div>
                   <Button size="sm" onClick={handleSearch} disabled={searching} className="shrink-0">
@@ -243,8 +244,8 @@ export function ProspectClient({
                   </Button>
                 </div>
                 {results.length > 0 && (
-                  <button onClick={handleClearResults} className="text-xs text-muted-foreground hover:text-destructive transition-colors">
-                    ✕ Clear results
+                  <button onClick={handleClearResults} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive transition-colors">
+                    <X className="w-3 h-3" /> Clear results
                   </button>
                 )}
               </div>
@@ -278,7 +279,7 @@ export function ProspectClient({
                       onClick={() => setFilter(f)}
                       className={`text-xs px-2 py-1 rounded-full border transition-colors ${filter === f ? "bg-primary text-primary-foreground border-primary" : "border-input hover:bg-muted"}`}
                     >
-                      {f === "all" ? `All (${results.length})` : f === "high" ? `🔴 No website (${highCount})` : `🟠 Has website (${medCount})`}
+                      {f === "all" ? `All (${results.length})` : f === "high" ? <><span className="inline-block w-2 h-2 rounded-full bg-red-500 mr-1" />No website ({highCount})</> : <><span className="inline-block w-2 h-2 rounded-full bg-orange-400 mr-1" />Has website ({medCount})</>}
                     </button>
                   ))}
                 </div>
@@ -292,7 +293,7 @@ export function ProspectClient({
               )}
               {!searching && results.length === 0 && !searchError && (
                 <div className="p-6 text-center text-muted-foreground text-sm">
-                  <p className="text-3xl mb-2">🏥</p>
+                  <Building2 className="w-8 h-8 mx-auto mb-2 opacity-40" />
                   <p>Enter a location and click Search to find medical practices in that area.</p>
                   <p className="mt-2 text-xs">Data is sourced from OpenStreetMap.</p>
                 </div>
@@ -326,9 +327,9 @@ export function ProspectClient({
                             <a href={result.website.startsWith("http") ? result.website : `https://${result.website}`}
                               target="_blank" rel="noreferrer"
                               onClick={(e) => e.stopPropagation()}
-                              className="text-xs px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 hover:underline"
+                              className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 hover:underline"
                             >
-                              🌐 website
+                              <Globe className="w-3 h-3" /> website
                             </a>
                           )}
                           {result.websiteSource === "none" && (
@@ -336,17 +337,17 @@ export function ProspectClient({
                               href={`https://www.google.com/search?q=${encodeURIComponent(result.name + " " + (result.address ?? "South Africa"))}`}
                               target="_blank" rel="noreferrer"
                               onClick={(e) => e.stopPropagation()}
-                              className="text-xs px-1.5 py-0.5 rounded bg-gray-50 text-gray-600 hover:underline"
+                              className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-gray-50 text-gray-600 hover:underline"
                               title="Verify on Google before adding to pipeline"
                             >
-                              🔍 Verify
+                              <Search className="w-3 h-3" /> Verify
                             </a>
                           )}
                         </div>
                         {isSelected && !result.inSystem && (
                           <div className="mt-2">
                             {alreadyAdded ? (
-                              <span className="text-xs text-green-700 font-medium">✓ Added to pipeline</span>
+                              <span className="inline-flex items-center gap-1 text-xs text-green-700 font-medium"><Check className="w-3 h-3" /> Added to pipeline</span>
                             ) : (
                               <Button size="sm" className="h-7 text-xs" disabled={isPending} onClick={(e) => { e.stopPropagation(); handleAdd(result); }}>
                                 + Add to Pipeline
@@ -391,7 +392,7 @@ export function ProspectClient({
         <div className="flex-1 overflow-y-auto p-6">
           {prospects.length === 0 ? (
             <div className="text-center py-20 text-muted-foreground">
-              <p className="text-4xl mb-3">📋</p>
+              <ClipboardList className="w-12 h-12 mx-auto mb-3 opacity-30" />
               <p className="font-medium">No prospects yet</p>
               <p className="text-sm mt-1">Use the Discover tab to find practices and add them here.</p>
             </div>
@@ -431,9 +432,9 @@ export function ProspectClient({
                           {p.website && (
                             <a href={p.website.startsWith("http") ? p.website : `https://${p.website}`}
                               target="_blank" rel="noreferrer"
-                              className="text-xs text-blue-600 hover:underline"
+                              className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
                             >
-                              🌐 {p.website}
+                              <Globe className="w-3 h-3" /> {p.website}
                             </a>
                           )}
                           {p.notes && (
@@ -461,9 +462,9 @@ export function ProspectClient({
                                 key={s}
                                 onClick={() => handleStatusChange(p.id, s)}
                                 disabled={isPending}
-                                className="text-xs px-2.5 py-1 rounded border border-input hover:bg-muted transition-colors disabled:opacity-50 text-left whitespace-nowrap"
+                                className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded border border-input hover:bg-muted transition-colors disabled:opacity-50 whitespace-nowrap"
                               >
-                                → {STATUS_LABELS[s]?.label}
+                                <ChevronRight className="w-3 h-3" /> {STATUS_LABELS[s]?.label}
                               </button>
                             ))}
                           <button

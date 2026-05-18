@@ -9,6 +9,11 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { CancelBookingBtn } from "@/components/patient/cancel-booking-btn";
 import { PatientBookingCalendar } from "@/components/patient/patient-booking-calendar";
 import { format } from "date-fns";
+import {
+  Calendar, MessageCircle, Building2, ShieldCheck, BarChart3, Lock,
+  Stethoscope, Check, X, CheckCircle2, Star, Gift, ArrowRight,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 // ── Types ──────────────────────────────────────────────────────────
 const STATUS_CONFIG: Record<string, { label: string; color: string; actions: string[] }> = {
@@ -19,13 +24,13 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; actions: str
   no_show:   { label: "No Show",   color: "bg-red-100 text-red-700",       actions: ["book-again"] },
 };
 
-const FEATURES = [
-  { icon: "📅", title: "Real-time Online Booking",   desc: "Patients book directly from your profile — available 24/7." },
-  { icon: "💬", title: "WhatsApp Confirmations",     desc: "Automated WhatsApp & email reminders cut no-shows significantly." },
-  { icon: "🏥", title: "Multi-doctor Support",       desc: "Manage every doctor, service, and schedule from one dashboard." },
-  { icon: "✅", title: "Verified Practice Badge",    desc: "Build patient trust with a MediBook-Verified credential." },
-  { icon: "📊", title: "Booking Analytics",          desc: "See your busiest days, no-show rates, and revenue trends." },
-  { icon: "🔒", title: "POPIA Compliant",            desc: "Patient data encrypted and fully compliant with SA privacy law." },
+const FEATURES: Array<{ icon: LucideIcon; title: string; desc: string }> = [
+  { icon: Calendar,      title: "Real-time Online Booking",   desc: "Patients book directly from your profile — available 24/7." },
+  { icon: MessageCircle, title: "WhatsApp Confirmations",     desc: "Automated WhatsApp & email reminders cut no-shows significantly." },
+  { icon: Building2,     title: "Multi-doctor Support",       desc: "Manage every doctor, service, and schedule from one dashboard." },
+  { icon: ShieldCheck,   title: "Verified Practice Badge",    desc: "Build patient trust with a MediBook-Verified credential." },
+  { icon: BarChart3,     title: "Booking Analytics",          desc: "See your busiest days, no-show rates, and revenue trends." },
+  { icon: Lock,          title: "POPIA Compliant",            desc: "Patient data encrypted and fully compliant with SA privacy law." },
 ];
 
 // ── Patient portal (logged-in patient home) ────────────────────────
@@ -125,11 +130,11 @@ async function PatientHome({ userId, name }: { userId: string; name: string }) {
         {/* Empty state */}
         {appts.length === 0 && (
           <div className="text-center py-20 space-y-4">
-            <div className="text-5xl">📅</div>
+            <Calendar className="w-12 h-12 text-muted-foreground mx-auto" />
             <h3 className="text-xl font-semibold">No bookings yet</h3>
             <p className="text-muted-foreground">Find a doctor near you and book your first appointment.</p>
             <Link href="/browse">
-              <Button size="lg" className="mt-2">Find a Doctor →</Button>
+              <Button size="lg" className="mt-2">Find a Doctor <ArrowRight className="w-4 h-4 ml-1" /></Button>
             </Link>
           </div>
         )}
@@ -205,7 +210,9 @@ function MarketingPage() {
               </p>
               <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <Link href="/signup/practice">
-                  <Button size="lg" className="w-full sm:w-auto text-base px-8">Start Free Trial →</Button>
+                  <Button size="lg" className="w-full sm:w-auto text-base px-8">
+                    Start Free Trial <ArrowRight className="w-4 h-4 ml-1" />
+                  </Button>
                 </Link>
                 <Link href="/browse">
                   <Button size="lg" variant="outline" className="w-full sm:w-auto text-base">Find a Doctor</Button>
@@ -217,12 +224,16 @@ function MarketingPage() {
             <div className="hidden md:block">
               <div className="bg-background rounded-2xl border shadow-2xl p-6 space-y-4 max-w-sm mx-auto">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-2xl">🩺</div>
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Stethoscope className="w-6 h-6 text-primary" />
+                  </div>
                   <div className="flex-1">
                     <div className="font-semibold text-sm">Dr Jane Smith</div>
                     <div className="text-xs text-muted-foreground">General Practitioner · Sandton</div>
                   </div>
-                  <span className="text-xs bg-green-100 text-green-700 font-semibold px-2 py-1 rounded-full">✓ Verified</span>
+                  <span className="inline-flex items-center gap-1 text-xs bg-green-100 text-green-700 font-semibold px-2 py-1 rounded-full">
+                    <Check className="w-3 h-3" /> Verified
+                  </span>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   {["08:00","08:30","09:00","09:30","10:00","10:30"].map((t, i) => (
@@ -235,7 +246,8 @@ function MarketingPage() {
                 </div>
                 <div className="w-full bg-primary text-primary-foreground text-sm font-semibold py-2.5 rounded-xl text-center">Confirm Booking</div>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground bg-green-50 rounded-lg p-2">
-                  <span>💬</span><span>WhatsApp confirmation sent instantly</span>
+                  <MessageCircle className="w-4 h-4 text-green-600 shrink-0" />
+                  <span>WhatsApp confirmation sent instantly</span>
                 </div>
               </div>
             </div>
@@ -247,11 +259,16 @@ function MarketingPage() {
       <section className="bg-primary text-primary-foreground py-6">
         <div className="max-w-4xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
           <div>
-            <div className="font-bold text-lg">🎁 14-Day Free Trial — No Credit Card Required</div>
+            <div className="flex items-center gap-2 font-bold text-lg justify-center sm:justify-start">
+              <Gift className="w-5 h-5" />
+              14-Day Free Trial — No Credit Card Required
+            </div>
             <div className="text-primary-foreground/80 text-sm">Full Practice plan features. Setup in under 10 minutes.</div>
           </div>
           <Link href="/signup/practice" className="shrink-0">
-            <Button variant="secondary" size="lg" className="font-semibold">Start Free Now →</Button>
+            <Button variant="secondary" size="lg" className="font-semibold">
+              Start Free Now <ArrowRight className="w-4 h-4 ml-1" />
+            </Button>
           </Link>
         </div>
       </section>
@@ -266,11 +283,11 @@ function MarketingPage() {
             </p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {FEATURES.map((f) => (
-              <div key={f.title} className="rounded-2xl border bg-background p-6 hover:border-primary/40 hover:shadow-md transition-all space-y-3">
-                <div className="text-3xl">{f.icon}</div>
-                <h3 className="font-semibold">{f.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
+            {FEATURES.map(({ icon: Icon, title, desc }) => (
+              <div key={title} className="rounded-2xl border bg-background p-6 hover:border-primary/40 hover:shadow-md transition-all space-y-3">
+                <Icon className="w-8 h-8 text-primary" />
+                <h3 className="font-semibold">{title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
               </div>
             ))}
           </div>
@@ -282,7 +299,7 @@ function MarketingPage() {
         <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-10 items-center">
           <div className="space-y-5">
             <div className="inline-flex items-center gap-2 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">
-              ✅ Verified Practice Programme
+              <CheckCircle2 className="w-4 h-4" /> Verified Practice Programme
             </div>
             <h2 className="text-3xl font-bold text-green-900">
               Build Patient Trust<br />From Day One
@@ -293,12 +310,14 @@ function MarketingPage() {
             <ul className="space-y-2 text-sm text-green-800">
               {["Appears first in directory search","Verified badge on all booking pages","Builds instant patient confidence","Free with any paid plan"].map((item) => (
                 <li key={item} className="flex items-center gap-2">
-                  <span className="text-green-600 font-bold">✓</span> {item}
+                  <Check className="w-4 h-4 text-green-600 shrink-0" /> {item}
                 </li>
               ))}
             </ul>
             <Link href="/signup/practice">
-              <Button className="bg-green-700 hover:bg-green-800 text-white mt-2">Get Verified →</Button>
+              <Button className="bg-green-700 hover:bg-green-800 text-white mt-2">
+                Get Verified <ArrowRight className="w-4 h-4 ml-1" />
+              </Button>
             </Link>
           </div>
           {/* Verified badge visual */}
@@ -306,7 +325,7 @@ function MarketingPage() {
             <div className="relative">
               <div className="w-56 h-56 rounded-3xl bg-white shadow-2xl flex flex-col items-center justify-center gap-3 border-4 border-green-500">
                 <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
-                  <span className="text-3xl">✅</span>
+                  <CheckCircle2 className="w-10 h-10 text-green-600" />
                 </div>
                 <div className="text-center">
                   <div className="font-bold text-green-800 text-lg">Verified</div>
@@ -314,7 +333,7 @@ function MarketingPage() {
                 </div>
                 <div className="flex gap-1">
                   {[1,2,3,4,5].map((s) => (
-                    <span key={s} className="text-yellow-400 text-lg">★</span>
+                    <Star key={s} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
                   ))}
                 </div>
               </div>
@@ -336,19 +355,27 @@ function MarketingPage() {
               <div className="p-4 text-center text-muted-foreground">Directory only</div>
             </div>
             {[
-              ["Listed on search map","✅","✅"],
-              ["Online appointment booking","✅","❌"],
-              ["WhatsApp confirmation","✅","❌"],
-              ["Patient reminders","✅","❌"],
-              ["Practice dashboard","✅","❌"],
-              ["Verified badge","✅","❌"],
-              ["Booking analytics","✅","❌"],
-              ["Patient payments","✅ coming","❌"],
-            ].map(([feat, a, b]) => (
+              { feat: "Listed on search map",       medibook: true as const,      dir: true  },
+              { feat: "Online appointment booking", medibook: true as const,      dir: false },
+              { feat: "WhatsApp confirmation",      medibook: true as const,      dir: false },
+              { feat: "Patient reminders",          medibook: true as const,      dir: false },
+              { feat: "Practice dashboard",         medibook: true as const,      dir: false },
+              { feat: "Verified badge",             medibook: true as const,      dir: false },
+              { feat: "Booking analytics",          medibook: true as const,      dir: false },
+              { feat: "Patient payments",           medibook: "coming" as const,  dir: false },
+            ].map(({ feat, medibook, dir }) => (
               <div key={feat} className="grid grid-cols-3 border-t text-sm hover:bg-muted/20 transition-colors">
                 <div className="p-4 text-muted-foreground">{feat}</div>
-                <div className="p-4 text-center font-medium text-primary">{a}</div>
-                <div className="p-4 text-center text-muted-foreground">{b}</div>
+                <div className="p-4 flex items-center justify-center">
+                  {medibook === "coming"
+                    ? <span className="text-xs font-medium text-primary">Coming</span>
+                    : <Check className="w-5 h-5 text-primary" />}
+                </div>
+                <div className="p-4 flex items-center justify-center">
+                  {dir
+                    ? <Check className="w-5 h-5 text-muted-foreground" />
+                    : <X className="w-4 h-4 text-muted-foreground/40" />}
+                </div>
               </div>
             ))}
           </div>
@@ -364,7 +391,9 @@ function MarketingPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link href="/signup/practice">
-              <Button size="lg" variant="secondary" className="text-base px-10">Start Free Trial →</Button>
+              <Button size="lg" variant="secondary" className="text-base px-10">
+                Start Free Trial <ArrowRight className="w-4 h-4 ml-1" />
+              </Button>
             </Link>
             <Link href="/pricing">
               <Button size="lg" variant="outline" className="text-base border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">

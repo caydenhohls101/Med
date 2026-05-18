@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { AlertTriangle } from "lucide-react";
 
 export default function GlobalError({
   error,
@@ -20,7 +21,7 @@ export default function GlobalError({
   return (
     <section className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="w-full max-w-md text-center space-y-6">
-        <div className="text-6xl">⚠️</div>
+        <AlertTriangle className="w-16 h-16 text-destructive mx-auto" />
         <div className="space-y-2">
           <h2 className="text-2xl font-bold text-foreground">Something went wrong</h2>
           <p className="text-muted-foreground text-sm">

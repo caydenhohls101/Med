@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
+import { Camera, Loader2, Shield, LayoutDashboard, Search, LogOut } from "lucide-react";
 
 interface NavUser {
   id: string;
@@ -92,7 +93,7 @@ export function NavbarAvatar({ user }: { user: NavUser }) {
 
           {/* Change photo */}
           <label className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-muted cursor-pointer transition-colors">
-            <span className="text-base">{uploading ? "⏳" : "📷"}</span>
+            {uploading ? <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" /> : <Camera className="w-4 h-4 text-muted-foreground" />}
             <span>{uploading ? "Uploading…" : "Change Photo"}</span>
             <input
               type="file"
@@ -107,7 +108,7 @@ export function NavbarAvatar({ user }: { user: NavUser }) {
           {user.accountType === "admin" && (
             <Link href="/admin/prospects" onClick={() => setOpen(false)}
               className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-amber-50 text-amber-800 transition-colors font-medium">
-              <span className="text-base">🛡</span> Admin Panel
+              <Shield className="w-4 h-4" /> Admin Panel
             </Link>
           )}
 
@@ -115,7 +116,7 @@ export function NavbarAvatar({ user }: { user: NavUser }) {
           {user.accountType !== "patient" && user.accountType !== "admin" && (
             <Link href="/dashboard" onClick={() => setOpen(false)}
               className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-muted transition-colors">
-              <span className="text-base">📊</span> Dashboard
+              <LayoutDashboard className="w-4 h-4 text-muted-foreground" /> Dashboard
             </Link>
           )}
 
@@ -123,7 +124,7 @@ export function NavbarAvatar({ user }: { user: NavUser }) {
           {user.accountType === "patient" && (
             <Link href="/browse" onClick={() => setOpen(false)}
               className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-muted transition-colors">
-              <span className="text-base">🔍</span> Find a Doctor
+              <Search className="w-4 h-4 text-muted-foreground" /> Find a Doctor
             </Link>
           )}
 
@@ -134,7 +135,7 @@ export function NavbarAvatar({ user }: { user: NavUser }) {
                 type="submit"
                 className="flex items-center gap-3 w-full px-4 py-2.5 text-sm hover:bg-muted text-destructive transition-colors"
               >
-                <span className="text-base">🚪</span> Sign Out
+                <LogOut className="w-4 h-4" /> Sign Out
               </button>
             </form>
           </div>

@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { BookingCalendar } from "@/components/dashboard/booking-calendar";
 import { StatusUpdater } from "@/components/dashboard/status-updater";
 import { format, addDays, startOfMonth, endOfMonth } from "date-fns";
+import { CalendarDays, Sun } from "lucide-react";
 
 const STATUS_VARIANT: Record<string, "warning"|"success"|"destructive"|"secondary"|"outline"> = {
   pending: "warning", confirmed: "success", cancelled: "destructive",
@@ -68,7 +69,7 @@ export default async function DashboardPage() {
         </div>
         <Link href="/dashboard/calendar"
           className="inline-flex items-center gap-1.5 text-sm text-primary border border-primary/30 hover:bg-primary/5 px-4 py-2 rounded-xl font-medium transition-colors">
-          📅 Full Calendar
+          <CalendarDays className="w-4 h-4" /> Full Calendar
         </Link>
       </div>
 
@@ -98,7 +99,7 @@ export default async function DashboardPage() {
 
           {today_.length === 0 ? (
             <div className="bg-background rounded-2xl border p-10 text-center space-y-2">
-              <div className="text-4xl">☀️</div>
+              <Sun className="w-10 h-10 text-amber-400 mx-auto" />
               <p className="font-medium">Clear day today</p>
               <p className="text-sm text-muted-foreground">No appointments scheduled.</p>
             </div>

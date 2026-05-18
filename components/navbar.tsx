@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { env } from "@/lib/env";
 import { NavbarAvatar } from "./navbar-avatar";
 import { Button } from "./ui/button";
+import { Shield } from "lucide-react";
 
 export async function Navbar() {
   const supabase = await createClient();
@@ -45,9 +46,9 @@ export async function Navbar() {
           {isPlatformAdmin && (
             <Link
               href="/admin/prospects"
-              className="text-sm text-amber-700 hover:text-amber-900 px-3 py-1.5 rounded-md hover:bg-amber-50 transition-colors font-medium"
+              className="inline-flex items-center gap-1.5 text-sm text-amber-700 hover:text-amber-900 px-3 py-1.5 rounded-md hover:bg-amber-50 transition-colors font-medium"
             >
-              🛡 Admin
+              <Shield className="w-3.5 h-3.5" /> Admin
             </Link>
           )}
         </div>

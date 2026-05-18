@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { ShieldCheck } from "lucide-react";
 
 export default function AdminSignupPage() {
   const [state, action, pending] = useActionState(signupAdmin, null);
@@ -14,7 +15,7 @@ export default function AdminSignupPage() {
   return (
     <Card className="border-amber-200">
       <CardHeader>
-        <div className="text-3xl mb-1">🛡️</div>
+        <ShieldCheck className="w-10 h-10 text-amber-700 mb-1" />
         <CardTitle>Platform Admin Account</CardTitle>
         <CardDescription>
           For MediBook SA platform owners only. You need the admin access code to proceed.

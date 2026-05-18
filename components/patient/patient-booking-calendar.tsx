@@ -8,6 +8,7 @@ import {
 } from "date-fns";
 import Link from "next/link";
 import { DateWheelPicker } from "@/components/ui/date-wheel-picker";
+import { Search, CalendarDays, Pin, ChevronLeft, ChevronRight, Clock } from "lucide-react";
 
 interface PreviousPractice { slug: string; name: string; suburb: string; city: string }
 interface PatientAppt {
@@ -92,13 +93,13 @@ export function PatientBookingCalendar({ previousPractices, appointments }: {
           {/* ── Month navigation ── */}
           <div className="flex items-center justify-between px-5 py-2.5 border-b">
             <button onClick={() => setMonth((m) => subMonths(m, 1))}
-              className="glass-btn w-8 h-8 flex items-center justify-center rounded-lg text-sm text-muted-foreground font-bold">
-              ←
+              className="glass-btn w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground">
+              <ChevronLeft className="w-4 h-4" />
             </button>
             <span className="text-sm font-bold">{format(month, "MMMM yyyy")}</span>
             <button onClick={() => setMonth((m) => addMonths(m, 1))}
-              className="glass-btn w-8 h-8 flex items-center justify-center rounded-lg text-sm text-muted-foreground font-bold">
-              →
+              className="glass-btn w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground">
+              <ChevronRight className="w-4 h-4" />
             </button>
           </div>
 
@@ -118,18 +119,18 @@ export function PatientBookingCalendar({ previousPractices, appointments }: {
               const inMonth = isSameMonth(day, month);
               const isSel   = isSameDay(day, selected);
               const today_  = isToday(day);
-              const past    = isPast(day) && !today_;
+              const isPastDay = isPast(day) && !today_;
 
               return (
                 <button
                   key={day.toISOString()}
-                  onClick={() => inMonth && !past && pick(day)}
-                  disabled={!inMonth || past}
+                  onClick={() => inMonth && !isPastDay && pick(day)}
+                  disabled={!inMonth || isPastDay}
                   title={inMonth ? format(day, "d MMMM yyyy") : undefined}
                   className={[
                     "relative flex flex-col items-center justify-start rounded-xl h-14 pt-2 transition-all duration-150",
                     !inMonth ? "invisible" : "",
-                    past ? "opacity-30 cursor-not-allowed" : "cursor-pointer",
+                    isPastDay ? "opacity-30 cursor-not-allowed" : "cursor-pointer",
                     isSel
                       ? "bg-primary text-primary-foreground shadow-lg ring-2 ring-primary ring-offset-2 scale-105"
                       : today_
@@ -152,7 +153,7 @@ export function PatientBookingCalendar({ previousPractices, appointments }: {
 
                   {/* Count badge when 3+ */}
                   {appts.length >= 3 && !isSel && inMonth && (
-                    <span className={`absolute top-1 right-1 text-[8px] font-bold px-1 rounded-full text-white ${STATUS_DOT[appts[0].status]?.replace("bg-","bg-") ?? "bg-primary"}`}>
+                    <span className={`absolute top-1 right-1 text-[8px] font-bold px-1 rounded-full text-white ${STATUS_DOT[appts[0]?.status ?? ""] ?? "bg-primary"}`}>
                       {appts.length}
                     </span>
                   )}
@@ -227,7 +228,7 @@ export function PatientBookingCalendar({ previousPractices, appointments }: {
               href={`/browse?date=${selDateStr}`}
               className="glass-card flex items-center gap-3 bg-background rounded-2xl border-2 border-dashed border-primary/25 p-4 block"
             >
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-2xl shrink-0">🔍</div>
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0"><Search className="w-5 h-5 text-primary" /></div>
               <div className="flex-1">
                 <div className="font-semibold text-sm text-foreground">Find a Doctor Near You</div>
                 <div className="text-xs text-muted-foreground">Browse all practices on the map</div>
@@ -242,8 +243,8 @@ export function PatientBookingCalendar({ previousPractices, appointments }: {
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <div className="h-px flex-1 bg-border" />
-              <span className="text-xs font-bold text-amber-700 uppercase tracking-widest shrink-0">
-                📌 Upcoming ({upcoming.length})
+              <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-700 uppercase tracking-widest shrink-0">
+                <Pin className="w-3 h-3" /> Upcoming ({upcoming.length})
               </span>
               <div className="h-px flex-1 bg-border" />
             </div>
@@ -273,7 +274,7 @@ export function PatientBookingCalendar({ previousPractices, appointments }: {
 
         {upcoming.length === 0 && past.length === 0 && !isSelFuture && (
           <div className="text-center py-12 text-muted-foreground">
-            <div className="text-3xl mb-2">📅</div>
+            <CalendarDays className="w-10 h-10 mx-auto mb-2 opacity-40" />
             <p className="text-sm">No bookings yet — pick a date above to get started.</p>
           </div>
         )}
@@ -304,7 +305,7 @@ function AppointmentCard({ appt, faded }: { appt: PatientAppt; faded?: boolean }
         </div>
         <div className="text-[10px] font-mono text-muted-foreground/70 mt-0.5">{appt.reference_number}</div>
         {appt.status === "pending" && isFuture(d) && (
-          <div className="text-[10px] text-amber-600 font-medium mt-0.5">⏳ Awaiting confirmation</div>
+          <div className="inline-flex items-center gap-1 text-[10px] text-amber-600 font-medium mt-0.5"><Clock className="w-3 h-3" /> Awaiting confirmation</div>
         )}
       </div>
 

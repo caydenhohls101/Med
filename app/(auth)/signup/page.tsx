@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { User, Building2, ShieldCheck } from "lucide-react";
 
 export default function SignupChoicePage() {
   return (
@@ -12,7 +13,7 @@ export default function SignupChoicePage() {
         <Link href="/signup/patient" className="block">
           <Card className="hover:border-primary hover:bg-primary/5 transition-colors cursor-pointer">
             <CardHeader className="pb-2 pt-4">
-              <div className="text-2xl mb-1">🧑‍⚕️</div>
+              <User className="w-8 h-8 text-primary mb-1" />
               <CardTitle className="text-base">I&apos;m a Patient</CardTitle>
               <CardDescription>
                 Find doctors near you and book appointments online.
@@ -28,7 +29,7 @@ export default function SignupChoicePage() {
         <Link href="/signup/practice" className="block">
           <Card className="hover:border-primary hover:bg-primary/5 transition-colors cursor-pointer">
             <CardHeader className="pb-2 pt-4">
-              <div className="text-2xl mb-1">🏥</div>
+              <Building2 className="w-8 h-8 text-primary mb-1" />
               <CardTitle className="text-base">I Run a Medical Practice</CardTitle>
               <CardDescription>
                 List your practice, manage doctors, services, and accept online bookings.
@@ -44,7 +45,7 @@ export default function SignupChoicePage() {
         <Link href="/signup/admin" className="block">
           <Card className="hover:border-amber-400 hover:bg-amber-50 transition-colors cursor-pointer border-amber-200">
             <CardHeader className="pb-2 pt-4">
-              <div className="text-2xl mb-1">🛡️</div>
+              <ShieldCheck className="w-8 h-8 text-amber-700 mb-1" />
               <CardTitle className="text-base text-amber-800">MediBook Platform Admin</CardTitle>
               <CardDescription>
                 For MediBook platform owners — manage the directory, find new practices, and grow the network.

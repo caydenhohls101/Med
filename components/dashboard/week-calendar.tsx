@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { format, addDays, subDays, startOfWeek, isSameDay, isToday } from "date-fns";
 
 const HOUR_PX  = 72;   // pixels per hour
@@ -53,6 +54,7 @@ export function WeekCalendar({
   const [selectedDay, setSelectedDay] = useState(new Date());
   const [selectedDoc, setSelectedDoc] = useState<string | "all">("all");
   const [hovered, setHovered] = useState<string | null>(null);
+  const router = useRouter();
 
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const viewDays = view === "week" ? weekDays : [selectedDay];
@@ -172,13 +174,28 @@ export function WeekCalendar({
                           key={appt.id}
                           onMouseEnter={() => setHovered(appt.id)}
                           onMouseLeave={() => setHovered(null)}
-                          className={`absolute left-0.5 right-0.5 rounded-lg px-1.5 py-1 text-[10px] overflow-hidden cursor-pointer transition-all z-10
+                          onClick={() => router.push("/dashboard/bookings")}
+                          className={`absolute left-0.5 right-0.5 rounded-lg px-1.5 py-1 text-[10px] overflow-visible cursor-pointer transition-all z-10
                             ${STATUS_CLASSES[appt.status] ?? STATUS_CLASSES.pending}
-                            ${isHov ? "shadow-lg scale-[1.02] z-20" : "shadow-sm"}
+                            ${isHov ? "shadow-xl scale-[1.03] z-30" : "shadow-sm"}
                           `}
                           style={{ top, height }}
-                          title={`${format(new Date(appt.starts_at), "HH:mm")} — ${appt.patients?.first_name} ${appt.patients?.last_name}: ${appt.services?.name}`}
                         >
+                          {/* Rich hover tooltip */}
+                          {isHov && (
+                            <div className="absolute left-full top-0 ml-2 z-40 w-52 bg-background border rounded-xl shadow-2xl p-3 pointer-events-none animate-in fade-in slide-in-from-left-1 duration-150">
+                              <div className="font-bold text-sm text-foreground">
+                                {format(new Date(appt.starts_at), "HH:mm")} – {format(new Date(appt.ends_at), "HH:mm")}
+                              </div>
+                              <div className="font-semibold text-xs text-foreground mt-1">
+                                {appt.patients?.first_name} {appt.patients?.last_name}
+                              </div>
+                              <div className="text-xs text-muted-foreground">{appt.services?.name}</div>
+                              <div className="text-xs text-muted-foreground">{doc.title} {doc.full_name}</div>
+                              <div className="text-[10px] font-mono text-muted-foreground/70 mt-1">{appt.reference_number}</div>
+                              <div className="mt-2 text-[10px] text-primary font-semibold">Click to manage →</div>
+                            </div>
+                          )}
                           <div className="font-bold">{format(new Date(appt.starts_at), "HH:mm")}</div>
                           {height > 36 && (
                             <div className="truncate font-medium leading-tight">

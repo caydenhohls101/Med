@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { sendWhatsApp, confirmationMessage } from "@/lib/notifications/whatsapp";
+import { createBookingNotifications } from "@/app/actions/notifications";
 import { format } from "date-fns";
 
 function generateRef(): string {
@@ -142,21 +143,29 @@ export async function createBooking(data: {
   ]);
 
   if (practice && doctor) {
-    const startDate = new Date(data.startsAt);
-    await sendWhatsApp(
-      mobile,
-      confirmationMessage({
-        patientName: data.firstName,
-        patientMobile: mobile,
-        practiceName: practice.name,
-        doctorTitle: doctor.title,
-        doctorName: doctor.full_name,
-        date: format(startDate, "EEEE, d MMMM yyyy"),
-        time: format(startDate, "HH:mm"),
+    const startDate   = new Date(data.startsAt);
+    const dateFormatted = format(startDate, "EEEE, d MMMM yyyy");
+    const timeFormatted = format(startDate, "HH:mm");
+
+    // WhatsApp + in-app notifications — errors are swallowed, never block the booking
+    await Promise.all([
+      sendWhatsApp(mobile, confirmationMessage({
+        patientName: data.firstName, patientMobile: mobile,
+        practiceName: practice.name, doctorTitle: doctor.title,
+        doctorName: doctor.full_name, date: dateFormatted, time: timeFormatted,
         referenceNumber: appt.reference_number,
         practicePhone: practice.phone ?? undefined,
-      })
-    );
+      })),
+      createBookingNotifications({
+        practiceId: data.practiceId,
+        patientEmail: data.email,
+        patientName: `${data.firstName} ${data.lastName}`,
+        referenceNumber: appt.reference_number,
+        doctorName: `${doctor.title} ${doctor.full_name}`,
+        dateFormatted, timeFormatted,
+        type: "booking_created",
+      }).catch((e) => console.warn("[notifications]", e)),
+    ]);
   }
 
   return { referenceNumber: appt.reference_number };

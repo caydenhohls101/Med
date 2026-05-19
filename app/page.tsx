@@ -3,29 +3,76 @@ import { redirect } from "next/navigation";
 import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { StatScoreCards } from "@/components/ui/stat-score-card";
+import { BentoGrid, type BentoItem } from "@/components/ui/bento-grid";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { CancelBookingBtn } from "@/components/patient/cancel-booking-btn";
 import { PatientBookingCalendar } from "@/components/patient/patient-booking-calendar";
+import { Calendar, MessageCircle, Users, BadgeCheck, BarChart3, Shield } from "lucide-react";
 import { format } from "date-fns";
 
 // ── Types ──────────────────────────────────────────────────────────
+// Status colours are dark-mode-aware — defined in lib/status-colors.ts
 const STATUS_CONFIG: Record<string, { label: string; color: string; actions: string[] }> = {
-  pending:   { label: "Pending",   color: "bg-yellow-100 text-yellow-800", actions: ["cancel"] },
-  confirmed: { label: "Confirmed", color: "bg-green-100 text-green-800",   actions: ["cancel"] },
-  completed: { label: "Completed", color: "bg-blue-100 text-blue-800",     actions: ["book-again"] },
-  cancelled: { label: "Cancelled", color: "bg-gray-100 text-gray-600",     actions: ["book-again"] },
-  no_show:   { label: "No Show",   color: "bg-red-100 text-red-700",       actions: ["book-again"] },
+  pending:   { label: "Pending",   color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300", actions: ["cancel"] },
+  confirmed: { label: "Confirmed", color: "bg-green-100  text-green-800  dark:bg-green-900/30  dark:text-green-300",  actions: ["cancel"] },
+  completed: { label: "Completed", color: "bg-blue-100   text-blue-800   dark:bg-blue-900/30   dark:text-blue-300",   actions: ["book-again"] },
+  cancelled: { label: "Cancelled", color: "bg-gray-100   text-gray-600   dark:bg-gray-800      dark:text-gray-400",   actions: ["book-again"] },
+  no_show:   { label: "No Show",   color: "bg-red-100    text-red-700    dark:bg-red-900/30    dark:text-red-400",    actions: ["book-again"] },
 };
 
-const FEATURES = [
-  { icon: "📅", title: "Real-time Online Booking",   desc: "Patients book directly from your profile — available 24/7." },
-  { icon: "💬", title: "WhatsApp Confirmations",     desc: "Automated WhatsApp & email reminders cut no-shows significantly." },
-  { icon: "🏥", title: "Multi-doctor Support",       desc: "Manage every doctor, service, and schedule from one dashboard." },
-  { icon: "✅", title: "Verified Practice Badge",    desc: "Build patient trust with a MediBook-Verified credential." },
-  { icon: "📊", title: "Booking Analytics",          desc: "See your busiest days, no-show rates, and revenue trends." },
-  { icon: "🔒", title: "POPIA Compliant",            desc: "Patient data encrypted and fully compliant with SA privacy law." },
+const FEATURE_ITEMS: BentoItem[] = [
+  {
+    icon: <Calendar className="w-4 h-4 text-blue-500" />,
+    title: "Real-time Online Booking",
+    description: "Patients book directly from your practice profile — available 24/7, no phone calls needed.",
+    status: "Live",
+    tags: ["24/7", "Self-service"],
+    colSpan: 2,
+    hasPersistentHover: true,
+    cta: "See how →",
+  },
+  {
+    icon: <MessageCircle className="w-4 h-4 text-green-500" />,
+    title: "WhatsApp Confirmations",
+    description: "Automated WhatsApp & email reminders cut no-shows by up to 40%.",
+    status: "Free",
+    tags: ["WhatsApp", "Email"],
+    cta: "Learn more →",
+  },
+  {
+    icon: <Users className="w-4 h-4 text-purple-500" />,
+    title: "Multi-doctor Support",
+    description: "Manage every doctor, service, and schedule from one dashboard.",
+    status: "Unlimited",
+    tags: ["Doctors", "Roles"],
+    cta: "Explore →",
+  },
+  {
+    icon: <BadgeCheck className="w-4 h-4 text-emerald-500" />,
+    title: "Verified Practice Badge",
+    description: "Complete your profile and earn a Verified badge — patients book with confidence.",
+    status: "Free",
+    tags: ["Trust", "Visibility"],
+    colSpan: 2,
+    cta: "Get verified →",
+  },
+  {
+    icon: <BarChart3 className="w-4 h-4 text-orange-500" />,
+    title: "Booking Analytics",
+    description: "See your busiest days, most popular services, and no-show rates at a glance.",
+    status: "Pro",
+    tags: ["Reports", "Insights"],
+    cta: "View plans →",
+  },
+  {
+    icon: <Shield className="w-4 h-4 text-slate-500" />,
+    title: "POPIA Compliant",
+    description: "Patient data encrypted, stored securely, and fully compliant with SA privacy law.",
+    status: "Certified",
+    tags: ["POPIA", "Encryption"],
+    cta: "Read more →",
+  },
 ];
 
 // ── Patient portal (logged-in patient home) ────────────────────────
@@ -72,7 +119,7 @@ async function PatientHome({ userId, name }: { userId: string; name: string }) {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
-      <div className="max-w-4xl mx-auto w-full px-4 py-8 space-y-8">
+      <div className="max-w-6xl mx-auto w-full px-6 py-8 space-y-8">
         {/* Welcome header */}
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
@@ -234,7 +281,7 @@ function MarketingPage() {
                   <div className="text-xs border rounded-lg px-3 py-2 bg-muted/30 text-muted-foreground">0821234567</div>
                 </div>
                 <div className="w-full bg-primary text-primary-foreground text-sm font-semibold py-2.5 rounded-xl text-center">Confirm Booking</div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground bg-green-50 rounded-lg p-2">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground bg-green-50 dark:bg-green-950/40 rounded-lg p-2">
                   <span>💬</span><span>WhatsApp confirmation sent instantly</span>
                 </div>
               </div>
@@ -265,15 +312,7 @@ function MarketingPage() {
               MedPages lists you. MediBook <em>books</em> you. Big difference.
             </p>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {FEATURES.map((f) => (
-              <div key={f.title} className="rounded-2xl border bg-background p-6 hover:border-primary/40 hover:shadow-md transition-all space-y-3">
-                <div className="text-3xl">{f.icon}</div>
-                <h3 className="font-semibold">{f.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
-              </div>
-            ))}
-          </div>
+          <BentoGrid items={FEATURE_ITEMS} cols={3} />
         </div>
       </section>
 
@@ -367,7 +406,7 @@ function MarketingPage() {
               <Button size="lg" variant="secondary" className="text-base px-10">Start Free Trial →</Button>
             </Link>
             <Link href="/pricing">
-              <Button size="lg" variant="outline" className="text-base border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
+              <Button size="lg" variant="outline" className="text-base bg-transparent border-primary-foreground/40 text-primary-foreground hover:bg-primary-foreground/15 hover:text-primary-foreground hover:border-primary-foreground/60">
                 See Pricing
               </Button>
             </Link>
@@ -398,8 +437,10 @@ export default async function HomePage() {
 
   if (user) {
     const accountType = user.user_metadata?.account_type as string | undefined;
+    // Platform admins go to admin home — NOT /dashboard (they have no practice_users row)
+    if (accountType === "admin") redirect("/admin");
     // Practice staff → send to their dashboard
-    if (accountType === "practice" || accountType === "admin") redirect("/dashboard");
+    if (accountType === "practice") redirect("/dashboard");
     // Patients see their booking portal
     const name = (user.user_metadata?.full_name as string) ?? user.email ?? "there";
     return <PatientHome userId={user.id} name={name} />;

@@ -66,6 +66,7 @@ export default async function BookPage({ params, searchParams }: Props) {
     createClient().then((c) => c.auth.getUser()),
   ]);
 
+  const isLoggedIn = !!user;
   const prefill = user
     ? {
         firstName: (user.user_metadata?.first_name as string) ?? "",
@@ -102,6 +103,7 @@ export default async function BookPage({ params, searchParams }: Props) {
           services={services ?? []}
           prefill={prefill}
           defaultDate={dateParam}
+          isLoggedIn={isLoggedIn}
         />
       </div>
     </div>

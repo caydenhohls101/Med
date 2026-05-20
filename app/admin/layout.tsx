@@ -22,9 +22,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <Navbar />
       <div className="border-b bg-amber-50 px-4 py-2 flex items-center gap-4 text-sm">
         <span className="font-semibold text-amber-800">🛡 MediBook Admin</span>
-        <Link href="/admin/practices" className="text-amber-700 hover:text-amber-900 hover:underline">
-          All Practices
+        <Link href="/admin" className="text-amber-700 hover:text-amber-900 hover:underline font-semibold">
+          Overview
         </Link>
+        <span className="text-amber-300">·</span>
+        <Link href="/admin/practices" className="text-amber-700 hover:text-amber-900 hover:underline">
+          Practices
+        </Link>
+        <span className="text-amber-300">·</span>
         <Link href="/admin/prospects" className="text-amber-700 hover:text-amber-900 hover:underline">
           Prospect Finder
         </Link>

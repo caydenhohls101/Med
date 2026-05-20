@@ -22,11 +22,11 @@ const STATUS_DOT: Record<string, string> = {
   completed: "bg-blue-400",  cancelled: "bg-gray-300", no_show: "bg-red-400",
 };
 const STATUS_LABEL: Record<string, { text: string; cls: string }> = {
-  confirmed: { text: "Confirmed", cls: "bg-green-100 text-green-800" },
-  pending:   { text: "Pending",   cls: "bg-amber-100 text-amber-800" },
-  completed: { text: "Completed", cls: "bg-blue-100 text-blue-800" },
-  cancelled: { text: "Cancelled", cls: "bg-gray-100 text-gray-500" },
-  no_show:   { text: "No Show",   cls: "bg-red-100 text-red-700" },
+  confirmed: { text: "Confirmed", cls: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" },
+  pending:   { text: "Pending",   cls: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300" },
+  completed: { text: "Completed", cls: "bg-blue-100  text-blue-800  dark:bg-blue-900/30  dark:text-blue-300"  },
+  cancelled: { text: "Cancelled", cls: "bg-gray-100  text-gray-500  dark:bg-gray-800     dark:text-gray-400"  },
+  no_show:   { text: "No Show",   cls: "bg-red-100   text-red-700   dark:bg-red-900/30   dark:text-red-400"   },
 };
 
 export function PatientBookingCalendar({ previousPractices, appointments }: {
@@ -212,12 +212,14 @@ export function PatientBookingCalendar({ previousPractices, appointments }: {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-sm text-foreground">{p.name}</div>
-                  <div className="text-xs text-muted-foreground">{p.suburb}, {p.city}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {[p.suburb, p.city].filter(Boolean).join(", ") || "South Africa"}
+                  </div>
                   <div className="text-xs text-primary font-medium mt-0.5">
                     Tap to book for {format(selected, "d MMM")} →
                   </div>
                 </div>
-                <span className="text-[10px] bg-green-50 text-green-700 border border-green-200 px-2 py-1 rounded-full font-semibold shrink-0">
+                <span className="text-[10px] bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800 px-2 py-1 rounded-full font-semibold shrink-0">
                   Returning
                 </span>
               </Link>

@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
+import { ThemeToggle } from "@/components/ui/curtain-theme-toggle";
 
 interface NavUser {
   id: string;
@@ -64,10 +65,11 @@ export function NavbarAvatar({ user }: { user: NavUser }) {
             alt={user.fullName ?? "User"}
             width={36}
             height={36}
-            className="rounded-full object-cover border"
+            className="rounded-full object-cover border-2 border-primary/20"
+            style={{ width: 36, height: 36, minWidth: 36, minHeight: 36 }}
           />
         ) : (
-          <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-semibold border-2 border-primary/20">
+          <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-semibold border-2 border-primary/20 shrink-0">
             {initials}
           </div>
         )}
@@ -78,7 +80,7 @@ export function NavbarAvatar({ user }: { user: NavUser }) {
           {/* User info header */}
           <div className="px-4 py-3 border-b bg-muted/30 flex items-center gap-3">
             {avatarUrl ? (
-              <Image src={avatarUrl} alt="" width={40} height={40} className="rounded-full object-cover shrink-0" />
+              <Image src={avatarUrl} alt="" width={40} height={40} className="rounded-full object-cover shrink-0" style={{ width: 40, height: 40, minWidth: 40, minHeight: 40 }} />
             ) : (
               <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold shrink-0">
                 {initials}
@@ -105,9 +107,9 @@ export function NavbarAvatar({ user }: { user: NavUser }) {
 
           {/* Admin link */}
           {user.accountType === "admin" && (
-            <Link href="/admin/prospects" onClick={() => setOpen(false)}
+            <Link href="/admin" onClick={() => setOpen(false)}
               className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-amber-50 text-amber-800 transition-colors font-medium">
-              <span className="text-base">🛡</span> Admin Panel
+              <span className="text-base">🛡</span> Admin Home
             </Link>
           )}
 
@@ -127,7 +129,19 @@ export function NavbarAvatar({ user }: { user: NavUser }) {
             </Link>
           )}
 
-          {/* Sign out — uses route handler so cookies are reliably cleared */}
+          {/* Dark mode toggle */}
+          <div className="flex items-center justify-between px-4 py-2.5 border-t">
+            <span className="text-sm text-muted-foreground">Dark mode</span>
+            <ThemeToggle
+              buttonSize={30}
+              duration={500}
+              onThemeChange={(theme) => {
+                try { localStorage.setItem("medibook-theme", theme); } catch { /* ignore */ }
+              }}
+            />
+          </div>
+
+          {/* Sign out */}
           <div className="border-t">
             <form action="/api/auth/signout" method="POST">
               <button

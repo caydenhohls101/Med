@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   format, startOfMonth, endOfMonth, startOfWeek, endOfWeek,
   eachDayOfInterval, isSameMonth, isSameDay, isToday,
@@ -34,7 +35,7 @@ function dayColour(appts: CalAppt[]) {
   return STATUS_COLOR[dominant] ?? STATUS_COLOR.pending;
 }
 
-export function BookingCalendar({ appointments }: { appointments: CalAppt[] }) {
+export function BookingCalendar({ appointments, fullWidth = false }: { appointments: CalAppt[]; fullWidth?: boolean }) {
   const [month, setMonth] = useState(new Date());
   const [selected, setSelected] = useState<Date>(new Date());
 
@@ -49,7 +50,7 @@ export function BookingCalendar({ appointments }: { appointments: CalAppt[] }) {
     .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
 
   return (
-    <div className="space-y-3">
+    <div className={fullWidth ? "grid md:grid-cols-2 gap-4 items-start" : "space-y-3"}>
       {/* ── Month calendar ── */}
       <div className="bg-background rounded-2xl border shadow-sm overflow-hidden">
         {/* Header */}
@@ -159,7 +160,7 @@ export function BookingCalendar({ appointments }: { appointments: CalAppt[] }) {
             <p className="text-xs text-muted-foreground">No appointments{isFuture(selected) ? " — schedule is clear" : ""}</p>
           </div>
         ) : (
-          <div className="divide-y max-h-72 overflow-y-auto">
+          <div className="divide-y max-h-96 overflow-y-auto">
             {selAppts.map((appt) => {
               const doc = appt.doctors;
               const pat = appt.patients;
@@ -167,27 +168,55 @@ export function BookingCalendar({ appointments }: { appointments: CalAppt[] }) {
               const col = STATUS_COLOR[appt.status];
               const late = appt.status === "pending" && isPast(new Date(appt.starts_at));
               return (
-                <div key={appt.id} className={`px-5 py-3 flex items-start gap-3 ${late ? "bg-red-50" : ""}`}>
+                // Click → All Bookings page; hover → rich card with all details
+                <Link
+                  key={appt.id}
+                  href="/dashboard/bookings"
+                  className={`group px-5 py-3 flex items-start gap-3 hover:bg-primary/5 transition-colors cursor-pointer relative ${
+                    late ? "bg-red-50/50 dark:bg-red-950/20" : ""
+                  }`}
+                  title={`${pat?.first_name} ${pat?.last_name} — ${svc?.name} — ${appt.reference_number}`}
+                >
                   {/* Status bar */}
                   <div className={`w-1 self-stretch rounded-full shrink-0 ${col?.bg ?? "bg-muted"}`} />
+
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-bold font-mono text-primary">
                         {format(new Date(appt.starts_at), "HH:mm")}
                       </span>
-                      {late && <span className="text-[10px] bg-red-100 text-red-700 font-semibold px-1.5 py-0.5 rounded-full">LATE</span>}
+                      {late && (
+                        <span className="text-[10px] bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 font-semibold px-1.5 py-0.5 rounded-full">
+                          LATE
+                        </span>
+                      )}
                     </div>
                     <div className="text-sm font-medium">{pat?.first_name} {pat?.last_name}</div>
                     <div className="text-xs text-muted-foreground">
                       {svc?.name}{doc ? ` · ${doc.title} ${doc.full_name}` : ""}
                     </div>
+                    <div className="text-[10px] text-muted-foreground/60 font-mono mt-0.5">{appt.reference_number}</div>
                   </div>
-                  <Badge variant={col?.badge ?? "outline"} className="text-[10px] shrink-0">
-                    {col?.label ?? appt.status}
-                  </Badge>
-                </div>
+
+                  <div className="flex flex-col items-end gap-1.5 shrink-0">
+                    <Badge variant={col?.badge ?? "outline"} className="text-[10px]">
+                      {col?.label ?? appt.status}
+                    </Badge>
+                    {/* "View" hint on hover */}
+                    <span className="text-[10px] text-primary opacity-0 group-hover:opacity-100 transition-opacity font-medium">
+                      View →
+                    </span>
+                  </div>
+                </Link>
               );
             })}
+          </div>
+        )}
+        {selAppts.length > 0 && (
+          <div className="px-5 py-2 border-t">
+            <Link href="/dashboard/bookings" className="text-xs text-primary hover:underline font-medium">
+              View all in bookings →
+            </Link>
           </div>
         )}
       </div>

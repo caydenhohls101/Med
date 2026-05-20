@@ -1,12 +1,24 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCachedPracticeUser, getCachedUser } from "@/lib/supabase/cached";
+import { createClient } from "@/lib/supabase/server";
 import { NavbarAvatar } from "@/components/navbar-avatar";
-import { CalendarDays, ClipboardList, UserRound, Stethoscope, ExternalLink, type LucideIcon } from "lucide-react";
+import { NavbarThemeToggle } from "@/components/navbar-theme-toggle";
+import { NotificationBell } from "@/components/notification-bell";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [practiceUser, user] = await Promise.all([getCachedPracticeUser(), getCachedUser()]);
   if (!practiceUser || !user) redirect("/login");
+
+  // Fetch notifications for the top bar bell
+  const supabase = await createClient();
+  const { data: notifications } = await supabase
+    .from("notifications")
+    .select("id, type, title, body, href, read, created_at")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(30);
+
 
   const role = practiceUser.role ?? "doctor";
   const practice = practiceUser.practices as { id: string; name: string; slug: string } | null;
@@ -24,7 +36,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             / {practice.name}
           </span>
         )}
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex items-center gap-2">
           {practice && (
             <a
               href={`/book/${practice.slug}`}
@@ -35,6 +47,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
               <ExternalLink className="w-3.5 h-3.5" /> Patient booking link
             </a>
           )}
+          {/* Theme toggle is in the avatar dropdown for logged-in users */}
+          <NotificationBell notifications={notifications ?? []} />
           <NavbarAvatar
             user={{
               id: user.id,

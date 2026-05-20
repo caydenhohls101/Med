@@ -16,7 +16,17 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Anti-flicker: apply dark class before React hydrates */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          try {
+            const t = localStorage.getItem('medibook-theme');
+            const dark = t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            if (dark) document.documentElement.classList.add('dark');
+          } catch(e) {}
+        ` }} />
+      </head>
       <body className={inter.className}>
         <SupabaseProvider>{children}</SupabaseProvider>
       </body>

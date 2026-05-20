@@ -2,64 +2,62 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { getAvailableSlots, createBooking } from "@/app/actions/bookings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { DateWheelPicker } from "@/components/ui/date-wheel-picker";
+import { format } from "date-fns";
 
 interface Doctor {
-  id: string;
-  full_name: string;
-  title: string;
-  specialty: string | null;
-  bio: string | null;
-  default_appointment_duration_minutes: number;
-  color: string;
+  id: string; full_name: string; title: string;
+  specialty: string | null; bio: string | null;
+  default_appointment_duration_minutes: number; color: string;
 }
-
 interface Service {
-  id: string;
-  name: string;
-  duration_minutes: number;
-  price_cents: number;
-  description: string | null;
-  requires_referral: boolean;
+  id: string; name: string; duration_minutes: number;
+  price_cents: number; description: string | null; requires_referral: boolean;
 }
-
-interface Prefill {
-  firstName: string;
-  lastName: string;
-  email: string;
-  mobile: string;
-}
+interface Prefill { firstName: string; lastName: string; email: string; mobile: string }
 
 interface Props {
   practice: { id: string; name: string; slug: string };
   doctors: Doctor[];
   services: Service[];
   prefill?: Prefill | null;
-  defaultDate?: string; // YYYY-MM-DD from ?date= query param
+  defaultDate?: string;        // YYYY-MM-DD from ?date= param
+  isLoggedIn?: boolean;        // passed from server — blocks booking if false
 }
 
 type Step = "doctor" | "service" | "datetime" | "details" | "success";
-
 const STEPS: Step[] = ["doctor", "service", "datetime", "details", "success"];
 
-const today = new Date().toISOString().split("T")[0]!;
+function dateStrToDate(str: string): Date {
+  return str ? new Date(str + "T12:00:00") : new Date();
+}
+function dateToStr(d: Date): string {
+  return format(d, "yyyy-MM-dd");
+}
 
-export function BookingSteps({ practice, doctors, services, prefill, defaultDate }: Props) {
-  const [step, setStep] = useState<Step>("doctor");
+const todayStr = format(new Date(), "yyyy-MM-dd");
+const todayDate = new Date();
+
+export function BookingSteps({ practice, doctors, services, prefill, defaultDate, isLoggedIn = false }: Props) {
+  const router = useRouter();
+
+  const [step, setStep]             = useState<Step>("doctor");
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
-  // Pre-fill the date from the ?date= query param (passed from the patient calendar)
-  const [selectedDate, setSelectedDate] = useState(defaultDate ?? "");
-  const [slots, setSlots] = useState<{ time: string; startsAt: string; endsAt: string }[]>([]);
-  const [selectedSlot, setSelectedSlot] = useState<{ time: string; startsAt: string; endsAt: string } | null>(null);
-  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [selectedDate, setSelectedDate]     = useState(defaultDate ?? "");
+  const [wheelDate, setWheelDate]           = useState<Date>(defaultDate ? dateStrToDate(defaultDate) : todayDate);
+  const [slots, setSlots]           = useState<{ time: string; startsAt: string; endsAt: string }[]>([]);
+  const [selectedSlot, setSelectedSlot]     = useState<{ time: string; startsAt: string; endsAt: string } | null>(null);
+  const [loadingSlots, setLoadingSlots]     = useState(false);
   const [referenceNumber, setReferenceNumber] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError]           = useState("");
   const [isPending, startTransition] = useTransition();
 
   const stepIndex = STEPS.indexOf(step);
@@ -75,9 +73,29 @@ export function BookingSteps({ practice, doctors, services, prefill, defaultDate
 
   function handleDateChange(date: string) {
     setSelectedDate(date);
+    setWheelDate(dateStrToDate(date));
     if (date && selectedDoctor && selectedService) {
       loadSlots(date, selectedDoctor.id, selectedService.duration_minutes);
     }
+  }
+
+  function handleWheelChange(d: Date) {
+    const str = dateToStr(d);
+    if (str < todayStr) return; // no past dates
+    setWheelDate(d);
+    setSelectedDate(str);
+    if (selectedDoctor && selectedService) {
+      loadSlots(str, selectedDoctor.id, selectedService.duration_minutes);
+    }
+  }
+
+  function handleContinueToDetails() {
+    if (!isLoggedIn) {
+      const next = encodeURIComponent(`/book/${practice.slug}${defaultDate ? `?date=${defaultDate}` : ""}`);
+      router.push(`/login?next=${next}`);
+      return;
+    }
+    setStep("details");
   }
 
   function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
@@ -85,10 +103,10 @@ export function BookingSteps({ practice, doctors, services, prefill, defaultDate
     setError("");
     const form = e.currentTarget;
     const firstName = (form.elements.namedItem("firstName") as HTMLInputElement).value;
-    const lastName = (form.elements.namedItem("lastName") as HTMLInputElement).value;
-    const email = (form.elements.namedItem("email") as HTMLInputElement).value;
-    const mobile = (form.elements.namedItem("mobile") as HTMLInputElement).value;
-    const notes = (form.elements.namedItem("notes") as HTMLTextAreaElement).value;
+    const lastName  = (form.elements.namedItem("lastName") as HTMLInputElement).value;
+    const email     = (form.elements.namedItem("email") as HTMLInputElement).value;
+    const mobile    = (form.elements.namedItem("mobile") as HTMLInputElement).value;
+    const notes     = (form.elements.namedItem("notes") as HTMLTextAreaElement).value;
 
     if (!selectedDoctor || !selectedService || !selectedSlot) return;
 
@@ -99,22 +117,17 @@ export function BookingSteps({ practice, doctors, services, prefill, defaultDate
         serviceId: selectedService.id,
         startsAt: selectedSlot.startsAt,
         endsAt: selectedSlot.endsAt,
-        firstName,
-        lastName,
-        email,
-        mobile,
+        firstName, lastName, email, mobile,
         ...(notes ? { notes } : {}),
       });
-
-      if (result.error) {
-        setError(result.error);
-      } else {
+      if (result.error) { setError(result.error); } else {
         setReferenceNumber(result.referenceNumber!);
         setStep("success");
       }
     });
   }
 
+  /* ── Success ── */
   if (step === "success") {
     return (
       <Card>
@@ -131,26 +144,10 @@ export function BookingSteps({ practice, doctors, services, prefill, defaultDate
             <p><strong>Date:</strong> {selectedDate}</p>
             <p><strong>Time:</strong> {selectedSlot?.time}</p>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Keep your reference number safe. The practice will confirm your appointment shortly.
-          </p>
+          <p className="text-xs text-muted-foreground">Keep your reference number safe. The practice will confirm shortly.</p>
           <div className="flex flex-col gap-2 pt-2">
-            <Link href="/" className="inline-flex items-center justify-center w-full px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
-              Back to Home
-            </Link>
-            <Link href="/browse" className="inline-flex items-center justify-center w-full px-4 py-2 rounded-lg border text-sm font-medium hover:bg-muted transition-colors">
-              Browse More Practices
-            </Link>
-            <Button variant="ghost" size="sm" onClick={() => {
-              setStep("doctor");
-              setSelectedDoctor(null);
-              setSelectedService(null);
-              setSelectedDate("");
-              setSelectedSlot(null);
-              setSlots([]);
-            }}>
-              Book Another Appointment
-            </Button>
+            <Link href="/" className="inline-flex items-center justify-center w-full px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90">Back to Home</Link>
+            <Link href="/browse" className="inline-flex items-center justify-center w-full px-4 py-2 rounded-lg border text-sm font-medium hover:bg-muted">Browse More Practices</Link>
           </div>
         </CardContent>
       </Card>
@@ -161,34 +158,27 @@ export function BookingSteps({ practice, doctors, services, prefill, defaultDate
     <div className="space-y-6">
       {/* Progress */}
       <div className="flex items-center gap-2">
-        {["Doctor", "Service", "Date & Time", "Your Details"].map((label, i) => (
+        {["Doctor","Service","Date & Time","Your Details"].map((label, i) => (
           <div key={label} className="flex items-center gap-2">
             <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
               i < stepIndex ? "bg-primary text-primary-foreground" :
               i === stepIndex ? "bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2" :
               "bg-muted text-muted-foreground"
-            }`}>
-              {i < stepIndex ? "✓" : i + 1}
-            </div>
-            <span className={`text-sm hidden sm:block ${i === stepIndex ? "font-medium" : "text-muted-foreground"}`}>
-              {label}
-            </span>
+            }`}>{i < stepIndex ? "✓" : i + 1}</div>
+            <span className={`text-sm hidden sm:block ${i === stepIndex ? "font-medium" : "text-muted-foreground"}`}>{label}</span>
             {i < 3 && <div className="w-8 h-px bg-border" />}
           </div>
         ))}
       </div>
 
-      {/* Step: Select Doctor */}
+      {/* ── Select Doctor ── */}
       {step === "doctor" && (
         <div className="space-y-4">
           <h2 className="text-lg font-semibold">Choose a Doctor</h2>
-          {doctors.length === 0 && (
-            <p className="text-muted-foreground text-sm">No doctors available at this time.</p>
-          )}
+          {doctors.length === 0 && <p className="text-muted-foreground text-sm">No doctors available at this time.</p>}
           <div className="grid gap-3">
             {doctors.map((doctor) => (
-              <button
-                key={doctor.id}
+              <button key={doctor.id}
                 onClick={() => { setSelectedDoctor(doctor); setStep("service"); }}
                 className="glass-card text-left p-4 rounded-2xl border bg-background w-full"
               >
@@ -208,27 +198,21 @@ export function BookingSteps({ practice, doctors, services, prefill, defaultDate
         </div>
       )}
 
-      {/* Step: Select Service */}
+      {/* ── Select Service ── */}
       {step === "service" && (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" onClick={() => setStep("doctor")}>← Back</Button>
             <h2 className="text-lg font-semibold">Choose a Service</h2>
           </div>
-          {services.length === 0 && (
-            <p className="text-muted-foreground text-sm">No services available at this time.</p>
-          )}
+          {services.length === 0 && <p className="text-muted-foreground text-sm">No services available at this time.</p>}
           <div className="grid gap-3">
             {services.map((service) => (
-              <button
-                key={service.id}
+              <button key={service.id}
                 onClick={() => {
                   setSelectedService(service);
                   setStep("datetime");
-                  // If a date was pre-selected (from the calendar), load slots immediately
-                  if (selectedDate && selectedDoctor) {
-                    loadSlots(selectedDate, selectedDoctor.id, service.duration_minutes);
-                  }
+                  if (selectedDate && selectedDoctor) loadSlots(selectedDate, selectedDoctor.id, service.duration_minutes);
                 }}
                 className="glass-card text-left p-4 rounded-2xl border bg-background w-full"
               >
@@ -242,9 +226,7 @@ export function BookingSteps({ practice, doctors, services, prefill, defaultDate
                     </div>
                   </div>
                   {service.price_cents > 0 && (
-                    <div className="text-sm font-semibold shrink-0 ml-4">
-                      R{(service.price_cents / 100).toFixed(2)}
-                    </div>
+                    <div className="text-sm font-semibold shrink-0 ml-4">R{(service.price_cents / 100).toFixed(2)}</div>
                   )}
                 </div>
               </button>
@@ -253,7 +235,7 @@ export function BookingSteps({ practice, doctors, services, prefill, defaultDate
         </div>
       )}
 
-      {/* Step: Select Date & Time */}
+      {/* ── Select Date & Time ── */}
       {step === "datetime" && (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -264,26 +246,35 @@ export function BookingSteps({ practice, doctors, services, prefill, defaultDate
           {defaultDate && selectedDate === defaultDate && (
             <div className="flex items-center gap-2 text-sm bg-primary/5 border border-primary/20 rounded-xl px-4 py-2.5 text-primary">
               <span>📅</span>
-              <span>Date pre-selected from your calendar — <strong>{new Date(defaultDate + "T12:00:00").toLocaleDateString("en-ZA", { weekday: "long", day: "numeric", month: "long" })}</strong>. Change it below if needed.</span>
+              <span>Date pre-selected from your calendar — <strong>{new Date(defaultDate + "T12:00:00").toLocaleDateString("en-ZA", { weekday: "long", day: "numeric", month: "long" })}</strong>.</span>
             </div>
           )}
 
           <Card>
-            <CardContent className="pt-6">
-              <div className="space-y-1.5">
-                <Label htmlFor="date">Select Date</Label>
-                <Input
-                  id="date"
-                  type="date"
-                  min={today}
-                  value={selectedDate}
-                  onChange={(e) => handleDateChange(e.target.value)}
-                  className="max-w-xs"
-                />
+            <CardContent className="pt-6 space-y-6">
+              {/* DateWheelPicker — matches patient dashboard */}
+              <div>
+                <p className="text-sm font-medium mb-1">
+                  {selectedDate
+                    ? format(dateStrToDate(selectedDate), "EEEE, d MMMM yyyy")
+                    : "Select a date"}
+                </p>
+                <div className="border rounded-xl overflow-hidden">
+                  <DateWheelPicker
+                    value={wheelDate}
+                    onChange={handleWheelChange}
+                    minYear={todayDate.getFullYear()}
+                    maxYear={todayDate.getFullYear() + 2}
+                    size="md"
+                    locale="en-ZA"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground mt-1.5 text-center">Scroll or drag to change date</p>
               </div>
 
+              {/* Time slots */}
               {selectedDate && (
-                <div className="mt-6">
+                <div>
                   <p className="text-sm font-medium mb-3">
                     {loadingSlots ? "Loading available times…" : `Available times (${slots.length} slots)`}
                   </p>
@@ -292,22 +283,19 @@ export function BookingSteps({ practice, doctors, services, prefill, defaultDate
                   )}
                   <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
                     {slots.map((slot) => (
-                      <button
-                        key={slot.startsAt}
-                        onClick={() => setSelectedSlot(slot)}
+                      <button key={slot.startsAt} onClick={() => setSelectedSlot(slot)}
                         className={`py-2 px-3 text-sm rounded-xl border font-mono transition-all ${
                           selectedSlot?.startsAt === slot.startsAt
                             ? "bg-primary text-primary-foreground border-primary shadow-lg scale-105"
                             : "glass-btn bg-background"
-                        }`}
-                      >
+                        }`}>
                         {slot.time}
                       </button>
                     ))}
                   </div>
 
                   {selectedSlot && (
-                    <Button className="mt-6" onClick={() => setStep("details")}>
+                    <Button className="mt-6" onClick={handleContinueToDetails}>
                       Continue with {selectedSlot.time} →
                     </Button>
                   )}
@@ -318,7 +306,7 @@ export function BookingSteps({ practice, doctors, services, prefill, defaultDate
         </div>
       )}
 
-      {/* Step: Patient Details */}
+      {/* ── Patient Details ── */}
       {step === "details" && (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -326,8 +314,8 @@ export function BookingSteps({ practice, doctors, services, prefill, defaultDate
             <h2 className="text-lg font-semibold">Your Details</h2>
           </div>
 
-          {/* Summary */}
-          <div className="rounded-lg bg-primary/5 border border-primary/20 p-4 text-sm space-y-1">
+          {/* Booking summary */}
+          <div className="rounded-xl bg-primary/5 border border-primary/20 p-4 text-sm space-y-1">
             <p><strong>{selectedDoctor?.title} {selectedDoctor?.full_name}</strong> — {selectedService?.name}</p>
             <p className="text-muted-foreground">{selectedDate} at {selectedSlot?.time}</p>
           </div>
@@ -340,12 +328,10 @@ export function BookingSteps({ practice, doctors, services, prefill, defaultDate
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
                 {error && (
-                  <div className="rounded-md bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
-                    {error}
-                  </div>
+                  <div className="rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">{error}</div>
                 )}
                 {prefill && (
-                  <div className="rounded-md bg-primary/5 border border-primary/20 px-3 py-2 text-xs text-primary flex items-center gap-2">
+                  <div className="rounded-xl bg-primary/5 border border-primary/20 px-3 py-2 text-xs text-primary flex items-center gap-2">
                     <span>✓</span> Details pre-filled from your account — update if needed.
                   </div>
                 )}
@@ -370,17 +356,11 @@ export function BookingSteps({ practice, doctors, services, prefill, defaultDate
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="notes">Notes for the Doctor (optional)</Label>
-                  <textarea
-                    id="notes"
-                    name="notes"
-                    rows={3}
+                  <textarea id="notes" name="notes" rows={3}
                     placeholder="Reason for visit, symptoms, etc."
-                    className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  />
+                    className="flex w-full rounded-xl border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  By booking you consent to your information being used to manage your appointment (POPIA).
-                </p>
+                <p className="text-xs text-muted-foreground">By booking you consent to your information being used to manage your appointment (POPIA).</p>
                 <Button type="submit" className="w-full" disabled={isPending}>
                   {isPending ? "Booking…" : "Confirm Booking"}
                 </Button>

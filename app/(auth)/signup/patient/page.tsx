@@ -16,6 +16,10 @@ function PatientForm() {
   const next = searchParams.get("next") ?? "";
 
   return (
+    <div className="space-y-3">
+      <Link href="/signup" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+        ← Back
+      </Link>
     <Card>
       <CardHeader>
         <CardTitle>Create Patient Account</CardTitle>
@@ -66,6 +70,7 @@ function PatientForm() {
         </CardFooter>
       </form>
     </Card>
+    </div>
   );
 }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, CircleMarker, useMap } from "react-leaflet";
 import L from "leaflet";
 import Link from "next/link";
 import "leaflet/dist/leaflet.css";
@@ -72,6 +72,7 @@ interface Props {
   singleMarker?: boolean;
   selectedId?: string | null;
   onSelect?: (id: string) => void;
+  userLocation?: { lat: number; lon: number };
 }
 
 // Color palette — cycles through for different practices
@@ -85,6 +86,7 @@ export function PracticeMap({
   singleMarker = false,
   selectedId = null,
   onSelect,
+  userLocation,
 }: Props) {
   const defaultCenter: [number, number] = center ?? [-26.2041, 28.0473];
 
@@ -102,6 +104,19 @@ export function PracticeMap({
       />
 
       <FlyToSelected practices={practices} selectedId={selectedId} />
+
+      {/* "You are here" marker */}
+      {userLocation && (
+        <CircleMarker
+          center={[userLocation.lat, userLocation.lon]}
+          radius={10}
+          pathOptions={{ fillColor: "#2563EB", fillOpacity: 1, color: "white", weight: 3 }}
+        >
+          <Popup closeButton={false} maxWidth={160}>
+            <div className="text-sm font-semibold text-center py-1">📍 You are here</div>
+          </Popup>
+        </CircleMarker>
+      )}
 
       {practices.map((p, i) => {
         const color = COLORS[i % COLORS.length]!;

@@ -105,6 +105,12 @@ export function NavbarAvatar({ user }: { user: NavUser }) {
             />
           </label>
 
+          {/* My Appointments — visible to ALL logged-in users */}
+          <Link href="/my-appointments" onClick={() => setOpen(false)}
+            className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-muted transition-colors font-medium">
+            <span className="text-base">📅</span> My Appointments
+          </Link>
+
           {/* Admin link */}
           {user.accountType === "admin" && (
             <Link href="/admin" onClick={() => setOpen(false)}
@@ -113,21 +119,19 @@ export function NavbarAvatar({ user }: { user: NavUser }) {
             </Link>
           )}
 
-          {/* Dashboard link for practice staff */}
-          {user.accountType !== "patient" && user.accountType !== "admin" && (
+          {/* Dashboard link for practice staff — also shown for patients who are staff */}
+          {user.accountType !== "admin" && (
             <Link href="/dashboard" onClick={() => setOpen(false)}
               className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-muted transition-colors">
-              <span className="text-base">📊</span> Dashboard
+              <span className="text-base">📊</span> Practice Dashboard
             </Link>
           )}
 
-          {/* Find a doctor for patients */}
-          {user.accountType === "patient" && (
-            <Link href="/browse" onClick={() => setOpen(false)}
-              className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-muted transition-colors">
-              <span className="text-base">🔍</span> Find a Doctor
-            </Link>
-          )}
+          {/* Find a doctor */}
+          <Link href="/browse" onClick={() => setOpen(false)}
+            className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-muted transition-colors">
+            <span className="text-base">🔍</span> Find a Doctor
+          </Link>
 
           {/* Dark mode toggle */}
           <div className="flex items-center justify-between px-4 py-2.5 border-t">

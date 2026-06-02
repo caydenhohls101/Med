@@ -29,7 +29,6 @@ const FEATURE_ITEMS: BentoItem[] = [
     status: "Live",
     tags: ["24/7", "Self-service"],
     colSpan: 2,
-    hasPersistentHover: true,
     cta: "See how →",
   },
   {

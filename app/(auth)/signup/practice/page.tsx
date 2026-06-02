@@ -17,6 +17,10 @@ export default function PracticeSignupPage() {
   const [state, action, pending] = useActionState(signupPractice, null);
 
   return (
+    <div className="space-y-3">
+      <Link href="/signup" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+        ← Back
+      </Link>
     <Card>
       <CardHeader>
         <CardTitle>Register Your Practice</CardTitle>
@@ -101,5 +105,6 @@ export default function PracticeSignupPage() {
         </CardFooter>
       </form>
     </Card>
+    </div>
   );
 }

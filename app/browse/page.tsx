@@ -20,9 +20,13 @@ export default async function BrowsePage() {
   const practices = await getPractices();
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
+    // overflow-hidden only on the BrowseClient container — NOT on Navbar — so
+    // the avatar dropdown and notification panel aren't clipped by the map area.
+    <div className="flex flex-col h-screen">
       <Navbar />
-      <BrowseClient practices={practices} />
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <BrowseClient practices={practices} />
+      </div>
     </div>
   );
 }

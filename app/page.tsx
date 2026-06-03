@@ -8,11 +8,11 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { CancelBookingBtn } from "@/components/patient/cancel-booking-btn";
 import { PatientBookingCalendar } from "@/components/patient/patient-booking-calendar";
-import { Calendar, MessageCircle, Users, BadgeCheck, BarChart3, Shield } from "lucide-react";
 import { format } from "date-fns";
 import {
   Calendar, MessageCircle, Building2, ShieldCheck, BarChart3, Lock,
   Stethoscope, Check, X, CheckCircle2, Star, Gift, ArrowRight,
+  Users, BadgeCheck, Shield,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 

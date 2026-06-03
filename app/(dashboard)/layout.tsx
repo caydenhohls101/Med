@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { unstable_cache } from "next/cache";
 import { getCachedPracticeUser, getCachedUser } from "@/lib/supabase/cached";
-import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { NavbarAvatar } from "@/components/navbar-avatar";
 import { NavbarThemeToggle } from "@/components/navbar-theme-toggle";
 import { NotificationBell } from "@/components/notification-bell";
@@ -10,14 +11,21 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const [practiceUser, user] = await Promise.all([getCachedPracticeUser(), getCachedUser()]);
   if (!practiceUser || !user) redirect("/login");
 
-  // Fetch notifications for the top bar bell
-  const supabase = await createClient();
-  const { data: notifications } = await supabase
-    .from("notifications")
-    .select("id, type, title, body, href, read, created_at")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(30);
+  // Notifications cached for 15s — no DB hit on quick tab switches
+  const notifications = await unstable_cache(
+    async () => {
+      const supabase = createServiceClient();
+      const { data } = await supabase
+        .from("notifications")
+        .select("id, type, title, body, href, read, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(30);
+      return data ?? [];
+    },
+    [`dashboard-notifications-${user.id}`],
+    { revalidate: 15 }
+  )();
 
 
   const role = practiceUser.role ?? "doctor";
@@ -110,6 +118,7 @@ function NavLink({ href, label, icon: Icon }: { href: string; label: string; ico
   return (
     <Link
       href={href}
+      prefetch
       className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
     >
       <Icon className="w-4 h-4 shrink-0" />

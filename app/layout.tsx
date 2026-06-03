@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { SupabaseProvider } from "@/components/supabase-provider";
+import { ProgressBar } from "@/components/progress-bar";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -27,7 +28,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           } catch(e) {}
         ` }} />
       </head>
-      <body className={inter.className}>
+      <body className={inter.className} suppressHydrationWarning>
+        <ProgressBar />
         <SupabaseProvider>{children}</SupabaseProvider>
       </body>
     </html>

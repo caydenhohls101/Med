@@ -1,24 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
-
-interface OverpassElement {
-  type: string; id: number;
-  lat?: number; lon?: number;
-  center?: { lat: number; lon: number };
-  tags: Record<string, string>;
-}
-
-async function fetchWithTimeout(url: string, options: RequestInit, ms: number) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), ms);
-  try { return await fetch(url, { ...options, signal: controller.signal }); }
-  finally { clearTimeout(timer); }
-}
-
-const OVERPASS_ENDPOINTS = [
-  "https://overpass-api.de/api/interpreter",
-  "https://overpass.kumi.systems/api/interpreter",
-];
+import { queryOverpass } from "@/lib/overpass";
 
 // Public endpoint — patients search for ALL nearby medical facilities
 export async function GET(request: NextRequest) {
@@ -43,25 +25,16 @@ export async function GET(request: NextRequest) {
   way["amenity"="doctors"](around:${radius},${lat},${lon});
   way["amenity"="clinic"](around:${radius},${lat},${lon});
 );
-out center;
-`.trim();
+out center;`.trim();
 
-  let overpassData: { elements?: OverpassElement[] } | null = null;
-  for (const endpoint of OVERPASS_ENDPOINTS) {
-    try {
-      const res = await fetchWithTimeout(endpoint, {
-        method: "POST",
-        body: `data=${encodeURIComponent(query)}`,
-        headers: { "Content-Type": "application/x-www-form-urlencoded", "User-Agent": "MediBook-SA/1.0" },
-      }, 20000);
-      if (!res.ok) continue;
-      overpassData = await res.json();
-      break;
-    } catch { continue; }
-  }
-
-  if (!overpassData) {
-    return NextResponse.json({ error: "Map data unavailable. Try again." }, { status: 502 });
+  let elements;
+  try {
+    const result = await queryOverpass(query, 20000);
+    elements = result.elements;
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Unknown error";
+    console.error("[places/nearby]", msg);
+    return NextResponse.json({ error: "Map data temporarily unavailable. Try again in a moment." }, { status: 502 });
   }
 
   // Cross-reference with registered practices
@@ -72,12 +45,13 @@ out center;
 
   const registeredNames = new Set((practices ?? []).map((p) => p.name.toLowerCase().trim()));
 
-  const results = (overpassData.elements ?? [])
+  const results = elements
     .filter((el) => el.tags?.name)
     .map((el) => {
       const elLat = el.lat ?? el.center?.lat;
       const elLon = el.lon ?? el.center?.lon;
       if (!elLat || !elLon) return null;
+
       const name = el.tags.name.trim();
       const isOnMediBook = registeredNames.has(name.toLowerCase());
       const practice = isOnMediBook
@@ -85,22 +59,16 @@ out center;
         : null;
 
       return {
-        osmId: String(el.id),
-        name,
-        address: [el.tags["addr:housenumber"], el.tags["addr:street"], el.tags["addr:suburb"]]
-          .filter(Boolean).join(" ") || null,
+        osmId: String(el.id), name, isOnMediBook, slug: practice?.slug ?? null,
+        address: [el.tags["addr:housenumber"], el.tags["addr:street"], el.tags["addr:suburb"]].filter(Boolean).join(" ") || null,
         phone: el.tags.phone ?? el.tags["contact:phone"] ?? null,
         website: el.tags.website ?? null,
         type: el.tags.amenity ?? el.tags.healthcare ?? el.tags.office ?? "medical",
-        latitude: elLat,
-        longitude: elLon,
-        isOnMediBook,
-        slug: practice?.slug ?? null,
+        latitude: elLat, longitude: elLon,
       };
     })
     .filter(Boolean)
     .sort((a, b) => {
-      // Registered practices first, then by name
       if (a!.isOnMediBook && !b!.isOnMediBook) return -1;
       if (!a!.isOnMediBook && b!.isOnMediBook) return 1;
       return a!.name.localeCompare(b!.name);
